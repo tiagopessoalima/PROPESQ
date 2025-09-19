@@ -45,6 +45,13 @@ Este projeto utiliza um conjunto de tecnologias consolidadas no ecossistema de C
 -   **Ambiente:** `Jupyter Notebooks/Lab`, `VS Code`
 -   **Controle de Versão:** `Git` e `GitHub`
 
-## 📁 Estrutura do Repositório
+## 📈 Metodologia de Trabalho
 
-A estrutura de diretórios foi projetada para garantir modularidade e organização:
+Adotamos uma abordagem baseada no **CRISP-DM** (*Cross-Industry Standard Process for Data Mining*):
+
+1.  **Entendimento do Problema:** Definição dos objetivos da pesquisa.
+2.  **Coleta e Entendimento dos Dados:** Aquisição e análise exploratória inicial.
+3.  **Preparação dos Dados:** Limpeza, transformação e engenharia de atributos.
+4.  **Modelagem:** Seleção e aplicação de algoritmos de Machine Learning.
+5.  **Avaliação:** Análise de performance dos modelos com métricas adequadas.
+6.  **Deploy e Visualização:** Implementação e/ou apresentação dos resultados via dashboards.
