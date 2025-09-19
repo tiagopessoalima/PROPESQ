@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Cursos de Pós-Graduação - IFPE (de CSV)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #005c80;
+            --secondary-color: #009ee3;
+            --accent-color: #ff6b00;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --card-height: 140px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 1rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .view-toggle {
+            display: flex;
+            margin-bottom: 1rem;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .view-toggle button {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .view-toggle button.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        /* Estilos para os cards de indicadores */
+        .indicators-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .indicator-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: var(--card-height);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .indicator-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .indicator-card.active {
+            border: 2px solid var(--secondary-color);
+            background-color: rgba(0, 158, 227, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(0, 92, 128, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: auto 0;
+            color: var(--dark-color);
+        }
+        
+        .card-comparison {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: auto;
+        }
+        
+        .card-comparison.positive {
+            color: #28a745;
+        }
+        
+        .card-comparison.negative {
+            color: #dc3545;
+        }
+        
+        /* Novo estilo para o card de distribuição por área */
+        .area-distribution {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .area-bar {
+            flex: 1;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .area-progress {
+            height: 100%;
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+        }
+        
+        .area-percentage {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .map-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            height: calc(100% - var(--card-height) - 1rem);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .table-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            height: calc(100% - var(--card-height) - 1rem);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        #courses-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        #courses-table th, #courses-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        #courses-table th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        #courses-table th:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        #courses-table th.sort-asc::after {
+            content: " ▲";
+            font-size: 0.8em;
+        }
+        
+        #courses-table th.sort-desc::after {
+            content: " ▼";
+            font-size: 0.8em;
+        }
+        
+        #courses-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        #courses-table tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .table-scroll {
+            max-height: 100%;
+            overflow-y: auto;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+        }
+        
+        .legend {
+            padding: 6px 8px;
+            background: white;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 18px;
+            color: #555;
+        }
+        
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+            border-radius: 50%;
+        }
+        
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+        
+        .leaflet-popup-content {
+            max-width: 300px;
+        }
+        
+        .popup-course-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 0;
+            padding-left: 1rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+        }
+        
+        .no-results {
+            padding: 1rem;
+            text-align: center;
+            font-style: italic;
+            color: #777;
+        }
+        
+        .btn-site {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-site:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .area-list {
+            margin-top: 1rem;
+        }
+        
+        .area-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .area-name {
+            font-weight: 500;
+        }
+        
+        .area-count {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-group {
+                min-width: 100%;
+            }
+            
+            .view-toggle {
+                flex-direction: column;
+            }
+            
+            .indicators-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-container, .table-container {
+                height: calc(55% - var(--card-height) - 1rem);
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mapa de Cursos de Pós-Graduação - IFPE</h1>
+            <div class="search-container">
+                <div class="search-group">
+                    <label for="search">Pesquisar curso:</label>
+                    <input type="text" id="search" placeholder="Digite o nome do curso...">
+                </div>
+                
+                <div class="search-group">
+                    <label for="area">Filtrar por área:</label>
+                    <select id="area">
+                        <option value="">Todas as áreas</option>
+                        <option value="Educação">Educação</option>
+                        <option value="Tecnologia">Tecnologia</option>
+                        <option value="Saúde">Saúde</option>
+                        <option value="Gestão">Gestão</option>
+                        <option value="Engenharia">Engenharia</option>
+                        <option value="Ambiental">Ambiental</option>
+                        <option value="Humanas">Humanas</option>
+                    </select>
+                </div>
+                
+                <div class="search-group">
+                    <label for="type">Filtrar por tipo:</label>
+                    <select id="type">
+                        <option value="">Todos os tipos</option>
+                        <option value="Stricto Sensu">Stricto Sensu</option>
+                        <option value="Lato Sensu">Lato Sensu</option>
+                    </select>
+                </div>
+                
+                <div class="search-group">
+                    <label for="region">Filtrar por região:</label>
+                    <select id="region">
+                        <option value="">Todas as regiões</option>
+                        <option value="Metropolitana">Região Metropolitana</option>
+                        <option value="Zona da Mata">Zona da Mata</option>
+                        <option value="Agreste">Agreste</option>
+                        <option value="Sertão">Sertão</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="view-toggle">
+                <button id="map-view-btn" class="active">Visualização do Mapa</button>
+                <button id="table-view-btn">Visualização em Tabela</button>
+            </div>
+            
+            <div class="indicators-container" id="indicators-container">
+                <div class="indicator-card" id="total-courses-card">
+                    <div class="card-header">
+                        <div class="card-title">Total de Cursos</div>
+                        <div class="card-icon">📊</div>
+                    </div>
+                    <div class="card-value" id="total-courses">0</div>
+                    <div class="card-comparison" id="total-comparison">Carregando...</div>
+                </div>
+                
+                <div class="indicator-card" id="stricto-courses-card">
+                    <div class="card-header">
+                        <div class="card-title">Cursos Stricto Sensu</div>
+                        <div class="card-icon">🎓</div>
+                    </div>
+                    <div class="card-value" id="stricto-courses">0</div>
+                    <div class="card-comparison" id="stricto-percentage">0% do total</div>
+                </div>
+                
+                <div class="indicator-card" id="area-distribution-card">
+                    <div class="card-header">
+                        <div class="card-title">Distribuição por Área</div>
+                        <div class="card-icon">📚</div>
+                    </div>
+                    <div class="card-value" id="top-area">-</div>
+                    <div class="area-distribution">
+                        <div class="area-bar">
+                            <div class="area-progress" id="area-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="area-percentage" id="area-percentage">0%</div>
+                    </div>
+                    <div class="card-comparison" id="area-count">Clique para ver detalhes</div>
+                </div>
+                
+                <div class="indicator-card" id="regions-card">
+                    <div class="card-header">
+                        <div class="card-title">Cobertura Regional</div>
+                        <div class="card-icon">🗺️</div>
+                    </div>
+                    <div class="card-value" id="regions-covered">0/4</div>
+                    <div class="card-comparison" id="region-distribution">Carregando...</div>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <div id="map">
+                    <div class="loading">Carregando mapa e dados...</div>
+                </div>
+            </div>
+            
+            <div class="table-container" id="table-container">
+                <div class="table-scroll">
+                    <table id="courses-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Curso</th>
+                                <th data-sort="type">Tipo</th>
+                                <th data-sort="area">Área</th>
+                                <th data-sort="campus">Campus</th>
+                                <th data-sort="region">Região</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courses-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="area-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Distribuição de Cursos por Área</h2>
+            <div id="area-modal-content" class="area-list">
+                </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Variáveis globais
+        let map, markers = [], currentView = 'map', pernambucoLayer = null;
+        let allCoursesCount = 0;
+        let currentSort = { column: null, direction: 'asc' };
+        let areaDistributionData = {};
+        let campiData = []; // Esta variável agora começará vazia e será preenchida a partir do CSV
+
+        // --- NOVA LÓGICA PARA CARREGAR DADOS DO CSV ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/refs/heads/main/cursos_pos_graduacao.csv')
+                .then(response => response.text())
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            iniciarDashboard(results.data);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar o arquivo CSV:", error);
+                    document.querySelector('.loading').textContent = 'Falha ao carregar dados. Verifique o console.';
+                });
+        });
+
+        function iniciarDashboard(cursosDoCsv) {
+            // 1. Processar os dados do CSV para o formato aninhado que o script espera
+            const campi = {};
+            cursosDoCsv.forEach(curso => {
+                const nomeCampus = curso.Campus_Nome;
+                if (!campi[nomeCampus]) {
+                    campi[nomeCampus] = {
+                        name: nomeCampus,
+                        location: curso.Campus_Localizacao,
+                        coordinates: [parseFloat(curso.Campus_Latitude), parseFloat(curso.Campus_Longitude)],
+                        region: curso.Campus_Regiao,
+                        courses: []
+                    };
+                }
+                campi[nomeCampus].courses.push({
+                    name: curso.Curso_Nome,
+                    type: curso.Curso_Tipo,
+                    area: curso.Curso_Area,
+                    url: curso.Curso_URL
+                });
+            });
+            campiData = Object.values(campi); // Transforma o objeto de volta em um array
+
+            // 2. Agora que os dados estão prontos, execute o resto do código
+            inicializarMapaEComponentes();
+        }
+
+        function inicializarMapaEComponentes() {
+            // O código original que estava em 'DOMContentLoaded' agora vai aqui
+            const loadingElement = document.querySelector('.loading');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+            
+            map = L.map('map').setView([-8.38, -37.66], 8);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Restante do código de inicialização (marcadores, legenda, filtros, etc.)
+            // ... (O código abaixo é exatamente o mesmo do seu arquivo original, movido para dentro desta função) ...
+            
+            // Carregar o GeoJSON de Pernambuco
+            fetch('https://raw.githubusercontent.com/tbrugz/geodata-br/refs/heads/master/geojson/geojs-26-mun.json')
+                .then(response => response.json())
+                .then(data => {
+                    pernambucoLayer = L.geoJSON(data, {
+                        style: {
+                            color: '#005c80',
+                            weight: 2,
+                            fillColor: 'rgba(0, 92, 128, 0.1)',
+                            fillOpacity: 0.3
+                        }
+                    }).addTo(map);
+                    map.fitBounds(pernambucoLayer.getBounds());
+                })
+                .catch(error => console.error('Erro ao carregar o GeoJSON de Pernambuco:', error));
+
+            const regionColors = {
+                "Metropolitana": "#e41a1c",
+                "Zona da Mata": "#377eb8",
+                "Agreste": "#4daf4a",
+                "Sertão": "#984ea3",
+                "Vários": "#ff7f00"
+            };
+
+            allCoursesCount = campiData.reduce((total, campus) => total + campus.courses.length, 0);
+            updateIndicators(campiData);
+
+            campiData.forEach(campus => {
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${regionColors[campus.region]}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+                
+                const popupContent = `
+                    <strong>${campus.name}</strong><br>
+                    <em>${campus.location}</em><br>
+                    <strong>Cursos (${campus.courses.length}):</strong>
+                    <ul class="popup-course-list">
+                        ${campus.courses.map(course => `<li>${course.name} (${course.type})</li>`).join('')}
+                    </ul>
+                `;
+                
+                const marker = L.marker(campus.coordinates, { icon: markerIcon })
+                    .addTo(map)
+                    .bindPopup(popupContent);
+                
+                markers.push({
+                    marker: marker,
+                    campus: campus
+                });
+            });
+
+            adjustMapToVisibleMarkers(); // <-- ESTA LINHA FOI ADICIONADA
+
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = '<h4>Regiões</h4>';
+                
+                for (const region in regionColors) {
+                    if (region !== "Vários") {
+                        div.innerHTML += `<div><i style="background:${regionColors[region]}"></i> ${region}</div>`;
+                    }
+                }
+                
+                div.innerHTML += `
+                    <div style="margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px;">
+                        <div><i style="background:rgba(0, 92, 128, 0.3); border: 1px solid #005c80;"></i> Estado de Pernambuco</div>
+                    </div>
+                `;
+                
+                return div;
+            };
+            legend.addTo(map);
+            
+            populateTable(campiData);
+            
+            document.getElementById('map-view-btn').addEventListener('click', () => showView('map'));
+            document.getElementById('table-view-btn').addEventListener('click', () => showView('table'));
+            
+            document.querySelectorAll('#courses-table th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => sortTable(header.getAttribute('data-sort')));
+            });
+            
+            let filterTimeout;
+            document.getElementById('search').addEventListener('input', () => {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(applyFilters, 300);
+            });
+            
+            document.getElementById('area').addEventListener('change', applyFilters);
+            document.getElementById('type').addEventListener('change', applyFilters);
+            document.getElementById('region').addEventListener('change', applyFilters);
+            
+            window.addEventListener('resize', () => map.invalidateSize());
+            
+            document.getElementById('total-courses-card').addEventListener('click', () => {
+                resetFilters();
+                showView('table');
+            });
+            
+            document.getElementById('stricto-courses-card').addEventListener('click', () => {
+                document.getElementById('type').value = 'Stricto Sensu';
+                applyFilters();
+                showView('table');
+            });
+            
+            document.getElementById('area-distribution-card').addEventListener('click', showAreaModal);
+            
+            document.getElementById('regions-card').addEventListener('click', () => {
+                document.getElementById('region').value = '';
+                applyFilters();
+                showView('map');
+            });
+            
+            const modal = document.getElementById('area-modal');
+            const closeBtn = document.querySelector('.close');
+            closeBtn.addEventListener('click', () => modal.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+
+        // --- RESTANTE DAS FUNÇÕES (sem alterações) ---
+        // (Cole aqui todas as outras funções: adjustMapToVisibleMarkers, populateTable, applyFilters, showView, updateIndicators, etc.)
+        // Nenhuma alteração é necessária nelas.
+        
+        function adjustMapToVisibleMarkers() {
+            const visibleMarkers = markers.filter(item => map.hasLayer(item.marker));
+            
+            if (visibleMarkers.length === 0) {
+                if (pernambucoLayer) {
+                    map.fitBounds(pernambucoLayer.getBounds());
+                }
+                return;
+            }
+
+            if (visibleMarkers.length === 1) {
+                map.setView(visibleMarkers[0].marker.getLatLng(), 13);
+                return;
+            }
+
+            const markerGroup = L.featureGroup(visibleMarkers.map(item => item.marker));
+            map.fitBounds(markerGroup.getBounds().pad(0.1));
+        }
+
+        function populateTable(data) {
+            const tableBody = document.getElementById('courses-table-body');
+            tableBody.innerHTML = '';
+            
+            let hasResults = false;
+            
+            data.forEach(campus => {
+                campus.courses.forEach(course => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${course.name}</td>
+                        <td>${course.type}</td>
+                        <td>${course.area}</td>
+                        <td>${campus.name}</td>
+                        <td>${campus.region}</td>
+                        <td>
+                            ${course.url ? 
+                                `<button class="btn-site" onclick="window.open('${course.url}', '_blank')">Ver site</button>` : 
+                                'N/A'}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                    hasResults = true;
+                });
+            });
+            
+            if (!hasResults) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.innerHTML = `
+                    <td colspan="6" class="no-results">Nenhum curso encontrado com os filtros aplicados.</td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+            
+            if (currentSort.column) {
+                sortTable(currentSort.column, false);
+            }
+        }
+        
+        function applyFilters() {
+            const searchText = document.getElementById('search').value.toLowerCase();
+            const areaFilter = document.getElementById('area').value;
+            const typeFilter = document.getElementById('type').value;
+            const regionFilter = document.getElementById('region').value;
+            
+            const filteredCampiData = campiData.map(campus => {
+                if (regionFilter && campus.region !== regionFilter) {
+                    return null;
+                }
+                
+                const filteredCourses = campus.courses.filter(course => {
+                    const matchesSearch = searchText === '' || course.name.toLowerCase().includes(searchText);
+                    const matchesArea = areaFilter === '' || course.area === areaFilter;
+                    const matchesType = typeFilter === '' || course.type === typeFilter;
+                    return matchesSearch && matchesArea && matchesType;
+                });
+                
+                if (filteredCourses.length > 0) {
+                    return { ...campus, courses: filteredCourses };
+                }
+                
+                return null;
+            }).filter(campus => campus !== null);
+            
+            populateTable(filteredCampiData);
+            updateIndicators(filteredCampiData);
+            
+            markers.forEach(item => {
+                if (regionFilter && item.campus.region !== regionFilter) {
+                    item.marker.remove();
+                    return;
+                }
+                
+                const filteredCourses = item.campus.courses.filter(course => {
+                    const matchesSearch = searchText === '' || course.name.toLowerCase().includes(searchText);
+                    const matchesArea = areaFilter === '' || course.area === areaFilter;
+                    const matchesType = typeFilter === '' || course.type === typeFilter;
+                    return matchesSearch && matchesArea && matchesType;
+                });
+                
+                if (filteredCourses.length > 0) {
+                    const popupContent = `
+                        <strong>${item.campus.name}</strong><br>
+                        <em>${item.campus.location}</em><br>
+                        <strong>Cursos (${filteredCourses.length}):</strong>
+                        <ul class="popup-course-list">
+                            ${filteredCourses.map(course => `<li>${course.name} (${course.type})</li>`).join('')}
+                        </ul>
+                    `;
+                    item.marker.setPopupContent(popupContent);
+                    if (!map.hasLayer(item.marker)) {
+                        item.marker.addTo(map);
+                    }
+                } else {
+                    item.marker.remove();
+                }
+            });
+
+            if (currentView === 'map') {
+                setTimeout(adjustMapToVisibleMarkers, 100);
+            }
+        }
+        
+        function showView(view) {
+            currentView = view;
+            
+            if (view === 'map') {
+                document.getElementById('map-view-btn').classList.add('active');
+                document.getElementById('table-view-btn').classList.remove('active');
+                document.querySelector('.map-container').style.display = 'block';
+                document.getElementById('table-container').style.display = 'none';
+                setTimeout(() => { map.invalidateSize(); adjustMapToVisibleMarkers(); }, 100);
+            } else {
+                document.getElementById('map-view-btn').classList.remove('active');
+                document.getElementById('table-view-btn').classList.add('active');
+                document.querySelector('.map-container').style.display = 'none';
+                document.getElementById('table-container').style.display = 'block';
+            }
+        }
+        
+        function updateIndicators(data) {
+            const totalCourses = data.reduce((total, campus) => total + campus.courses.length, 0);
+            const strictoSensuCount = data.reduce((total, campus) => 
+                total + campus.courses.filter(course => course.type === "Stricto Sensu").length, 0);
+            
+            areaDistributionData = {};
+            data.forEach(campus => {
+                campus.courses.forEach(course => {
+                    areaDistributionData[course.area] = (areaDistributionData[course.area] || 0) + 1;
+                });
+            });
+            
+            let topArea = "-";
+            let maxAreaCount = 0;
+            for (const area in areaDistributionData) {
+                if (areaDistributionData[area] > maxAreaCount) {
+                    maxAreaCount = areaDistributionData[area];
+                    topArea = area;
+                }
+            }
+            
+            const topAreaPercentage = totalCourses > 0 ? ((maxAreaCount / totalCourses) * 100).toFixed(1) : 0;
+            const regions = new Set(data.map(campus => campus.region));
+            const regionsCovered = regions.size;
+            
+            document.getElementById('total-courses').textContent = totalCourses;
+            document.getElementById('stricto-courses').textContent = strictoSensuCount;
+            document.getElementById('stricto-percentage').textContent = 
+                totalCourses > 0 ? `${((strictoSensuCount / totalCourses) * 100).toFixed(1)}% do total` : "0% do total";
+            
+            document.getElementById('top-area').textContent = topArea;
+            document.getElementById('area-progress').style.width = `${topAreaPercentage}%`;
+            document.getElementById('area-percentage').textContent = `${topAreaPercentage}%`;
+            document.getElementById('area-count').textContent = 
+                maxAreaCount > 0 ? `${maxAreaCount} cursos (clique para detalhes)` : "Nenhum curso";
+            
+            document.getElementById('regions-covered').textContent = `${regionsCovered}/4`;
+            document.getElementById('region-distribution').textContent = 
+                `Em ${regionsCovered} ${regionsCovered === 1 ? 'região' : 'regiões'}`;
+            
+            const comparisonElement = document.getElementById('total-comparison');
+            if (allCoursesCount === 0) { // Evita divisão por zero se o CSV estiver vazio
+                comparisonElement.textContent = "Nenhum curso carregado";
+                comparisonElement.className = "card-comparison";
+            } else if (totalCourses === allCoursesCount) {
+                comparisonElement.textContent = "Todos os cursos";
+                comparisonElement.className = "card-comparison";
+            } else {
+                const percentage = (totalCourses / allCoursesCount * 100).toFixed(1);
+                comparisonElement.textContent = `${percentage}% do total (${totalCourses}/${allCoursesCount})`;
+                comparisonElement.className = totalCourses > 0 ? "card-comparison positive" : "card-comparison negative";
+            }
+        }
+        
+        function sortTable(column, updateHeader = true) {
+            const tbody = document.getElementById('courses-table-body');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            if (updateHeader && currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else if (updateHeader) {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            
+            document.querySelectorAll('#courses-table th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            if (updateHeader) {
+                const currentHeader = document.querySelector(`#courses-table th[data-sort="${column}"]`);
+                if (currentHeader) {
+                    currentHeader.classList.add(`sort-${currentSort.direction}`);
+                }
+            }
+            
+            rows.sort((a, b) => {
+                let aValue = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+                let bValue = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+                
+                if (!isNaN(aValue) && !isNaN(bValue)) {
+                    aValue = parseFloat(aValue);
+                    bValue = parseFloat(bValue);
+                }
+                
+                if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function getColumnIndex(columnName) {
+            const headers = document.querySelectorAll('#courses-table th');
+            for (let i = 0; i < headers.length; i++) {
+                if (headers[i].getAttribute('data-sort') === columnName) return i + 1;
+            }
+            return 1;
+        }
+        
+        function resetFilters() {
+            document.getElementById('search').value = '';
+            document.getElementById('area').value = '';
+            document.getElementById('type').value = '';
+            document.getElementById('region').value = '';
+            applyFilters();
+        }
+        
+        function showAreaModal() {
+            const modal = document.getElementById('area-modal');
+            const modalContent = document.getElementById('area-modal-content');
+            
+            const sortedAreas = Object.entries(areaDistributionData).sort((a, b) => b[1] - a[1]);
+            const totalCourses = sortedAreas.reduce((total, area) => total + area[1], 0);
+            
+            let content = `<p>Total de cursos: <strong>${totalCourses}</strong></p><div class="area-list">`;
+            sortedAreas.forEach(([area, count]) => {
+                const percentage = totalCourses > 0 ? ((count / totalCourses) * 100).toFixed(1) : 0;
+                content += `
+                    <div class="area-item">
+                        <span class="area-name">${area}</span>
+                        <span class="area-count">${count} cursos (${percentage}%)</span>
+                    </div>`;
+            });
+            content += '</div>';
+            
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
