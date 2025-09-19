@@ -556,9 +556,8 @@
         let areaDistributionData = {};
         let campiData = []; // Esta variável agora começará vazia e será preenchida a partir do CSV
 
-        // --- NOVA LÓGICA PARA CARREGAR DADOS DO CSV ---
         document.addEventListener('DOMContentLoaded', () => {
-            fetch('https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/refs/heads/main/cursos_pos_graduacao.csv')
+            fetch('https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/refs/heads/main/mapa-cursos-posgraduacao-ifpe/cursos_pos_graduacao.csv')
                 .then(response => response.text())
                 .then(csvText => {
                     Papa.parse(csvText, {
@@ -596,14 +595,13 @@
                     url: curso.Curso_URL
                 });
             });
-            campiData = Object.values(campi); // Transforma o objeto de volta em um array
+            campiData = Object.values(campi); 
 
             // 2. Agora que os dados estão prontos, execute o resto do código
             inicializarMapaEComponentes();
         }
 
         function inicializarMapaEComponentes() {
-            // O código original que estava em 'DOMContentLoaded' agora vai aqui
             const loadingElement = document.querySelector('.loading');
             if (loadingElement) {
                 loadingElement.remove();
@@ -614,10 +612,7 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-
-            // Restante do código de inicialização (marcadores, legenda, filtros, etc.)
-            // ... (O código abaixo é exatamente o mesmo do seu arquivo original, movido para dentro desta função) ...
-            
+                
             // Carregar o GeoJSON de Pernambuco
             fetch('https://raw.githubusercontent.com/tbrugz/geodata-br/refs/heads/master/geojson/geojs-26-mun.json')
                 .then(response => response.json())
