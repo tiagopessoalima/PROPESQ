@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Cursos de Pós-Graduação - IFPE (de CSV)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #005c80;
@@ -386,6 +387,12 @@
             font-weight: 600;
         }
         
+        .chart-container {
+            margin-top: 1rem;
+            height: 300px;
+            position: relative;
+        }
+        
         @media (max-width: 768px) {
             .search-container {
                 flex-direction: column;
@@ -498,16 +505,39 @@
                         </div>
                         <div class="area-percentage" id="area-percentage">0%</div>
                     </div>
-                    <div class="card-comparison" id="area-count">Clique para ver detalhes</div>
+                    <div class="card-comparison" id="area-count">Clique para ver gráfico</div>
                 </div>
                 
-                <div class="indicator-card" id="regions-card">
+                <!-- Card modificado: Cursos por Região (substitui Cobertura Regional) -->
+                <div class="indicator-card" id="regional-courses-card">
                     <div class="card-header">
-                        <div class="card-title">Cobertura Regional</div>
-                        <div class="card-icon">🗺️</div>
+                        <div class="card-title">Cursos por Região</div>
+                        <div class="card-icon">🌎</div>
                     </div>
-                    <div class="card-value" id="regions-covered">0/4</div>
-                    <div class="card-comparison" id="region-distribution">Carregando...</div>
+                    <div class="card-value" id="top-region">-</div>
+                    <div class="area-distribution">
+                        <div class="area-bar">
+                            <div class="area-progress" id="region-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="area-percentage" id="region-percentage">0%</div>
+                    </div>
+                    <div class="card-comparison" id="region-count">Clique para ver gráfico</div>
+                </div>
+                
+                <!-- Novo card para distribuição por tipo de curso -->
+                <div class="indicator-card" id="type-distribution-card">
+                    <div class="card-header">
+                        <div class="card-title">Distribuição por Tipo</div>
+                        <div class="card-icon">📋</div>
+                    </div>
+                    <div class="card-value" id="type-distribution">-</div>
+                    <div class="area-distribution">
+                        <div class="area-bar">
+                            <div class="area-progress" id="type-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="area-percentage" id="type-percentage">0%</div>
+                    </div>
+                    <div class="card-comparison" id="type-count">Clique para ver gráfico</div>
                 </div>
             </div>
             
@@ -538,12 +568,36 @@
         </main>
     </div>
 
+    <!-- Modal para distribuição por área (agora com gráfico de barras) -->
     <div id="area-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Distribuição de Cursos por Área</h2>
-            <div id="area-modal-content" class="area-list">
-                </div>
+            <div class="chart-container">
+                <canvas id="area-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para distribuição por tipo -->
+    <div id="type-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Distribuição de Cursos por Tipo</h2>
+            <div class="chart-container">
+                <canvas id="type-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para distribuição por região -->
+    <div id="region-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Distribuição de Cursos por Região</h2>
+            <div class="chart-container">
+                <canvas id="region-chart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -554,7 +608,14 @@
         let allCoursesCount = 0;
         let currentSort = { column: null, direction: 'asc' };
         let areaDistributionData = {};
-        let campiData = []; // Esta variável agora começará vazia e será preenchida a partir do CSV
+        let typeDistributionData = {};
+        let regionalDistributionData = {};
+        let campiData = [];
+
+        // Instâncias dos gráficos
+        let typeChart = null;
+        let regionChart = null;
+        let areaChart = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             fetch('https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/refs/heads/main/mapa-cursos-posgraduacao-ifpe/cursos_pos_graduacao.csv')
@@ -621,7 +682,7 @@
                         style: {
                             color: '#005c80',
                             weight: 2,
-                            fillColor: 'rgba(0, 92, 128, 0.1)',
+                            fillColor: 'rg(0, 92, 128, 0.1)',
                             fillOpacity: 0.3
                         }
                     }).addTo(map);
@@ -667,7 +728,7 @@
                 });
             });
 
-            adjustMapToVisibleMarkers(); // <-- ESTA LINHA FOI ADICIONADA
+            adjustMapToVisibleMarkers();
 
             const legend = L.control({ position: 'bottomright' });
             legend.onAdd = function(map) {
@@ -724,27 +785,26 @@
             
             document.getElementById('area-distribution-card').addEventListener('click', showAreaModal);
             
-            document.getElementById('regions-card').addEventListener('click', () => {
-                document.getElementById('region').value = '';
-                applyFilters();
-                showView('map');
+            document.getElementById('regional-courses-card').addEventListener('click', showRegionModal);
+            
+            document.getElementById('type-distribution-card').addEventListener('click', showTypeModal);
+            
+            // Configurar eventos para fechar os modais
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                const closeBtn = modal.querySelector('.close');
+                closeBtn.addEventListener('click', () => modal.style.display = 'none');
             });
             
-            const modal = document.getElementById('area-modal');
-            const closeBtn = document.querySelector('.close');
-            closeBtn.addEventListener('click', () => modal.style.display = 'none');
             window.addEventListener('click', (event) => {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
+                modals.forEach(modal => {
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
+                    }
+                });
             });
         }
 
-
-        // --- RESTANTE DAS FUNÇÕES (sem alterações) ---
-        // (Cole aqui todas as outras funções: adjustMapToVisibleMarkers, populateTable, applyFilters, showView, updateIndicators, etc.)
-        // Nenhuma alteração é necessária nelas.
-        
         function adjustMapToVisibleMarkers() {
             const visibleMarkers = markers.filter(item => map.hasLayer(item.marker));
             
@@ -889,6 +949,7 @@
             const strictoSensuCount = data.reduce((total, campus) => 
                 total + campus.courses.filter(course => course.type === "Stricto Sensu").length, 0);
             
+            // Calcular distribuição por área
             areaDistributionData = {};
             data.forEach(campus => {
                 campus.courses.forEach(course => {
@@ -896,6 +957,26 @@
                 });
             });
             
+            // Calcular distribuição por tipo
+            typeDistributionData = {
+                "Stricto Sensu": 0,
+                "Lato Sensu": 0
+            };
+            data.forEach(campus => {
+                campus.courses.forEach(course => {
+                    if (course.type === "Stricto Sensu" || course.type === "Lato Sensu") {
+                        typeDistributionData[course.type] = (typeDistributionData[course.type] || 0) + 1;
+                    }
+                });
+            });
+            
+            // Calcular distribuição regional
+            regionalDistributionData = {};
+            data.forEach(campus => {
+                regionalDistributionData[campus.region] = (regionalDistributionData[campus.region] || 0) + campus.courses.length;
+            });
+            
+            // Encontrar a área com mais cursos
             let topArea = "-";
             let maxAreaCount = 0;
             for (const area in areaDistributionData) {
@@ -905,27 +986,58 @@
                 }
             }
             
+            // Encontrar a região com mais cursos
+            let topRegion = "-";
+            let maxRegionCount = 0;
+            for (const region in regionalDistributionData) {
+                if (regionalDistributionData[region] > maxRegionCount) {
+                    maxRegionCount = regionalDistributionData[region];
+                    topRegion = region;
+                }
+            }
+            
+            // Calcular percentuais
             const topAreaPercentage = totalCourses > 0 ? ((maxAreaCount / totalCourses) * 100).toFixed(1) : 0;
+            const topRegionPercentage = totalCourses > 0 ? ((maxRegionCount / totalCourses) * 100).toFixed(1) : 0;
+            const strictoPercentage = totalCourses > 0 ? ((typeDistributionData["Stricto Sensu"] / totalCourses) * 100).toFixed(1) : 0;
+            
+            // Contar regiões
             const regions = new Set(data.map(campus => campus.region));
             const regionsCovered = regions.size;
             
+            // Atualizar indicadores
             document.getElementById('total-courses').textContent = totalCourses;
             document.getElementById('stricto-courses').textContent = strictoSensuCount;
             document.getElementById('stricto-percentage').textContent = 
                 totalCourses > 0 ? `${((strictoSensuCount / totalCourses) * 100).toFixed(1)}% do total` : "0% do total";
             
-            document.getElementById('top-area').textContent = topArea;
+            // Área - MODIFICADO: mostrar "Top: NOME_DA_AREA"
+            document.getElementById('top-area').textContent = `Top: ${topArea}`;
             document.getElementById('area-progress').style.width = `${topAreaPercentage}%`;
             document.getElementById('area-percentage').textContent = `${topAreaPercentage}%`;
             document.getElementById('area-count').textContent = 
                 maxAreaCount > 0 ? `${maxAreaCount} cursos (clique para detalhes)` : "Nenhum curso";
             
-            document.getElementById('regions-covered').textContent = `${regionsCovered}/4`;
-            document.getElementById('region-distribution').textContent = 
-                `Em ${regionsCovered} ${regionsCovered === 1 ? 'região' : 'regiões'}`;
+            // Região - MODIFICADO: mostrar "Top: NOME_DA_REGIAO" em vez de "X/4"
+            document.getElementById('top-region').textContent = `Top: ${topRegion}`;
+            document.getElementById('region-progress').style.width = `${topRegionPercentage}%`;
+            document.getElementById('region-percentage').textContent = `${topRegionPercentage}%`;
+            document.getElementById('region-count').textContent = 
+                `${regionsCovered} regiões (clique para detalhes)`;
             
+            // Tipo (novo card)
+            document.getElementById('type-distribution').textContent = typeDistributionData["Stricto Sensu"] > typeDistributionData["Lato Sensu"] ? "Top: Stricto Sensu" : "Top: Lato Sensu";
+            document.getElementById('type-progress').style.width = `${strictoPercentage}%`;
+            document.getElementById('type-percentage').textContent = `${strictoPercentage}%`;
+            document.getElementById('type-count').textContent = 
+                `${typeDistributionData["Stricto Sensu"]} Stricto, ${typeDistributionData["Lato Sensu"]} Lato`;
+            
+
+
+
+            // Atualizar comparação do total
             const comparisonElement = document.getElementById('total-comparison');
-            if (allCoursesCount === 0) { // Evita divisão por zero se o CSV estiver vazio
+            if (allCoursesCount === 0) {
                 comparisonElement.textContent = "Nenhum curso carregado";
                 comparisonElement.className = "card-comparison";
             } else if (totalCourses === allCoursesCount) {
@@ -996,23 +1108,211 @@
         
         function showAreaModal() {
             const modal = document.getElementById('area-modal');
-            const modalContent = document.getElementById('area-modal-content');
             
-            const sortedAreas = Object.entries(areaDistributionData).sort((a, b) => b[1] - a[1]);
-            const totalCourses = sortedAreas.reduce((total, area) => total + area[1], 0);
+            // Destruir gráfico anterior se existir
+            if (areaChart) {
+                areaChart.destroy();
+            }
             
-            let content = `<p>Total de cursos: <strong>${totalCourses}</strong></p><div class="area-list">`;
-            sortedAreas.forEach(([area, count]) => {
-                const percentage = totalCourses > 0 ? ((count / totalCourses) * 100).toFixed(1) : 0;
-                content += `
-                    <div class="area-item">
-                        <span class="area-name">${area}</span>
-                        <span class="area-count">${count} cursos (${percentage}%)</span>
-                    </div>`;
+            // Preparar dados para o gráfico
+            const areas = Object.keys(areaDistributionData);
+            const counts = Object.values(areaDistributionData);
+            const total = counts.reduce((acc, count) => acc + count, 0);
+            
+            // Ordenar as áreas por contagem (do maior para o menor)
+            const sortedIndices = counts.map((count, index) => index).sort((a, b) => counts[b] - counts[a]);
+            const sortedAreas = sortedIndices.map(i => areas[i]);
+            const sortedCounts = sortedIndices.map(i => counts[i]);
+            
+            // Criar gráfico de barras
+            const ctx = document.getElementById('area-chart').getContext('2d');
+            areaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedAreas,
+                    datasets: [{
+                        label: 'Número de Cursos',
+                        data: sortedCounts,
+                        backgroundColor: 'rgba(0, 158, 227, 0.8)',
+                        borderColor: 'rgba(0, 158, 227, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Cursos'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Áreas'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `Quantidade: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
-            content += '</div>';
             
-            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+        }
+        
+        function showTypeModal() {
+            const modal = document.getElementById('type-modal');
+            
+            // Destruir gráfico anterior se existir
+            if (typeChart) {
+                typeChart.destroy();
+            }
+            
+            const total = typeDistributionData["Stricto Sensu"] + typeDistributionData["Lato Sensu"];
+            
+            const ctx = document.getElementById('type-chart').getContext('2d');
+            typeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Stricto Sensu', 'Lato Sensu'],
+                    datasets: [{
+                        label: 'Número de Cursos',
+                        data: [typeDistributionData["Stricto Sensu"], typeDistributionData["Lato Sensu"]],
+                        backgroundColor: [
+                            'rgba(0, 158, 227, 0.8)',
+                            'rgba(255, 107, 0, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(0, 158, 227, 1)',
+                            'rgba(255, 107, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Cursos'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tipos de Curso'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `Quantidade: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            modal.style.display = 'block';
+        }
+
+        // Nova função para mostrar o modal com gráfico de barras de regiões
+        function showRegionModal() {
+            const modal = document.getElementById('region-modal');
+            
+            // Destruir gráfico anterior se existir
+            if (regionChart) {
+                regionChart.destroy();
+            }
+            
+            // Preparar dados para o gráfico
+            const regions = Object.keys(regionalDistributionData);
+            const counts = Object.values(regionalDistributionData);
+            const total = counts.reduce((acc, count) => acc + count, 0);
+            
+            // Ordenar as regiões por contagem
+            const sortedIndices = counts.map((count, index) => index).sort((a, b) => counts[b] - counts[a]);
+            const sortedRegions = sortedIndices.map(i => regions[i]);
+            const sortedCounts = sortedIndices.map(i => counts[i]);
+            
+            // Cores para as regiões (usando as mesmas do mapa)
+            const regionColors = {
+                "Metropolitana": "#e41a1c",
+                "Zona da Mata": "#377eb8",
+                "Agreste": "#4daf4a",
+                "Sertão": "#984ea3",
+                "Vários": "#ff7f00"
+            };
+            
+            const backgroundColors = sortedRegions.map(region => regionColors[region] || '#999999');
+            
+            // Criar gráfico de barras
+            const ctx = document.getElementById('region-chart').getContext('2d');
+            regionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedRegions,
+                    datasets: [{
+                        label: 'Número de Cursos',
+                        data: sortedCounts,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Cursos'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Regiões'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `Quantidade: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
             modal.style.display = 'block';
         }
     </script>
