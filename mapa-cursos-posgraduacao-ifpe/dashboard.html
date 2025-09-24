@@ -1243,6 +1243,27 @@
             const selectedTypes = getSelectedValues(document.getElementById('type'));
             const selectedRegions = getSelectedValues(document.getElementById('region'));
             
+            // Se nenhum item estiver selecionado em qualquer um dos filtros (área, tipo, região), não exibe nada
+            if (selectedAreas.length === 0 || selectedTypes.length === 0 || selectedRegions.length === 0) {
+                // Limpa a tabela
+                populateTable([]);
+                updateIndicators([]);
+                
+                // Remove todos os marcadores do mapa
+                markers.forEach(item => {
+                    if (map.hasLayer(item.marker)) {
+                        item.marker.remove();
+                    }
+                });
+                
+                // Ajusta o mapa para a camada de Pernambuco
+                if (pernambucoLayer) {
+                    map.fitBounds(pernambucoLayer.getBounds());
+                }
+                
+                return;
+            }
+            
             const filteredCampiData = campiData.map(campus => {
                 if (selectedRegions.length > 0 && !selectedRegions.includes(campus.region)) {
                     return null;
