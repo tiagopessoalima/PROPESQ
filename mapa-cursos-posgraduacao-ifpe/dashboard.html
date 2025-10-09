@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Cursos de Pós-Graduação - IFPE</title>
+    <title>Cursos de Pós-Graduação - IFPE</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -41,6 +41,44 @@
             color: white;
             padding: 1rem;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Logo no header */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .header-logo {
+            height: 60px;
+            width: auto;
+            max-width: 200px;
+            object-fit: contain;
+        }
+        
+        .header-title {
+            flex: 1;
+            margin-right: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-logo {
+                height: 50px;
+                margin-top: 0.5rem;
+                align-self: flex-end;
+            }
+            
+            .header-title {
+                margin-right: 0;
+                width: 100%;
+            }
         }
         
         .search-container {
@@ -540,7 +578,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>Mapa de Cursos de Pós-Graduação - IFPE</h1>
+            <div class="header-top">
+                <div class="header-title">
+                    <h1><b>Cursos de Pós-Graduação - IFPE</b></h1>
+                </div>
+                <img src="https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/7ccedef003925289017c65d673e92484aaa43c8d/mapa-cursos-posgraduacao-ifpe/logo.png" 
+                     alt="Logo IFPE" 
+                     class="header-logo">
+            </div>
             <div class="search-container">
                 <div class="search-group">
                     <label for="search">Pesquisar curso:</label>
@@ -548,7 +593,7 @@
                 </div>
                 
                 <div class="search-group">
-                    <label for="area">Filtrar por área:</label>
+                    <label for="area">Pesquisar por área:</label>
                     <div class="filter-select-wrapper">
                         <select id="area" multiple style="display: none;">
                             <option value="">Todas as áreas</option>
@@ -565,7 +610,7 @@
                 </div>
                 
                 <div class="search-group">
-                    <label for="type">Filtrar por tipo:</label>
+                    <label for="type">Pesquisar por tipo:</label>
                     <div class="filter-select-wrapper">
                         <select id="type" multiple style="display: none;">
                             <option value="">Todos os tipos</option>
@@ -582,7 +627,7 @@
                 </div>
                 
                 <div class="search-group">
-                    <label for="region">Filtrar por região:</label>
+                    <label for="region">Pesquisar por região:</label>
                     <div class="filter-select-wrapper">
                         <select id="region" multiple style="display: none;">
                             <option value="">Todas as regiões</option>
@@ -671,8 +716,21 @@
                     </div>
                     <div class="card-comparison" id="type-count">Clique para ver gráfico</div>
                 </div>
-            </div>
+           
             
+
+		<!-- Quinto card: Estudantes Formados (ESTÁTICO) -->
+                <div class="indicator-card static" id="students-card">
+                    <div class="card-header">
+                        <div class="card-title">Estudantes Formados</div>
+                        <div class="card-icon">🎓</div>
+                    </div>
+                    <div class="card-value">2.127</div>
+                    <div class="card-comparison">Total de estudantes formados em pós-graduação</div>
+                </div>
+            </div>
+
+
             <div class="map-container">
                 <div id="map">
                     <div class="loading">Carregando mapa e dados...</div>
@@ -689,7 +747,7 @@
                                 <th data-sort="area">Área</th>
                                 <th data-sort="campus">Campus</th>
                                 <th data-sort="region">Região</th>
-                                <th>Ações</th>
+                                <th>Mais Informações</th>
                             </tr>
                         </thead>
                         <tbody id="courses-table-body">
@@ -891,7 +949,7 @@
                 
                 div.innerHTML += `
                     <div style="margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px;">
-                        <div><i style="background:rgba(0, 92, 128, 0.3); border: 1px solid #005c80;</div>
+                        <div><i style="background:rgba(0, 92, 128, 0.3); border: 1px solid #005c80;"></div>
                     </div>
                 `;
                 
