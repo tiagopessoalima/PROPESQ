@@ -22,18 +22,20 @@
             padding: 0;
         }
         
+        /* CORREÇÃO 1: Permitir rolagem e garantir altura mínima */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #ffffff;
             color: #333;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh; /* Alterado de height: 100vh */
+            /* overflow: hidden; REMOVIDO */
         }
         
+        /* CORREÇÃO 2: Ajustar altura do container principal */
         .container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh; /* Alterado de height: 100vh */
         }
         
         header {
@@ -241,10 +243,11 @@
             color: #aaa;
         }
         
+        /* CORREÇÃO 3: Remover overflow do conteúdo principal */
         .main-content {
             flex: 1;
             padding: 1rem;
-            overflow: hidden;
+            /* overflow: hidden; REMOVIDO */
             display: flex;
             flex-direction: column;
             background-color: #f8f9fa;
@@ -324,11 +327,12 @@
             color: var(--dark-color);
         }
         
+        /* CORREÇÃO 4: Definir altura fixa (ex: vh) para mapa/tabela */
         .map-container {
             border: 1px solid #ddd;
             border-radius: 4px;
             overflow: hidden;
-            height: calc(100% - var(--card-height) - 1rem);
+            height: 60vh; /* Alterado de calc() para vh */
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 1rem;
             background-color: white;
@@ -338,7 +342,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             overflow: hidden;
-            height: calc(100% - var(--card-height) - 1rem);
+            height: 60vh; /* Alterado de calc() para vh */
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: none;
             background-color: white;
@@ -489,8 +493,9 @@
                 grid-template-columns: 1fr;
             }
             
+            /* CORREÇÃO 5: Definir altura fixa para mobile */
             .map-container, .table-container {
-                height: calc(55% - var(--card-height) - 1rem);
+                height: 450px; /* Alterado de calc() para px */
             }
         }
     </style>
@@ -566,9 +571,7 @@
                 <button id="table-view-btn">Visualização em Tabela</button>
             </div>
             
-            <!-- Novos cards de indicadores -->
             <div class="indicators-container" id="indicators-container">
-                <!-- Card: Total de Cursos -->
                 <div class="indicator-card" id="total-courses-card">
                     <div class="card-content">
                         <div class="card-title">Total de Cursos</div>
@@ -576,7 +579,6 @@
                     </div>
                 </div>
                 
-                <!-- Card: Cursos Stricto Sensu -->
                 <div class="indicator-card" id="stricto-sensu-card">
                     <div class="card-content">
                         <div class="card-title">Cursos Stricto Sensu</div>
@@ -584,7 +586,6 @@
                     </div>
                 </div>
                 
-                <!-- Card: Cursos Lato Sensu -->
                 <div class="indicator-card" id="lato-sensu-card">
                     <div class="card-content">
                         <div class="card-title">Cursos Lato Sensu</div>
@@ -592,7 +593,6 @@
                     </div>
                 </div>
                 
-                <!-- Card: Estudantes Formados (ESTÁTICO) -->
                 <div class="indicator-card static" id="students-card">
                     <div class="card-content">
                         <div class="card-title">Estudantes Formados na Pós-graduação</div>
@@ -695,7 +695,7 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-                
+                    
             // Carregar o GeoJSON de Pernambuco
             fetch('https://raw.githubusercontent.com/tbrugz/geodata-br/refs/heads/master/geojson/geojs-26-mun.json')
                 .then(response => response.json())
