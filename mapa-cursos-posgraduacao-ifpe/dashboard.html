@@ -13,7 +13,7 @@
             --accent-color: #ff6b00;
             --light-color: #f8f9fa;
             --dark-color: #212529;
-            --card-height: 140px;
+            --card-height: 70px; /* Altura reduzida dos cards */
         }
         
         * {
@@ -52,9 +52,9 @@
         }
         
         .header-logo {
-            height: 60px;
+            height: 100px;
             width: auto;
-            max-width: 200px;
+            max-width: 250px;
             object-fit: contain;
         }
         
@@ -181,6 +181,10 @@
             border-bottom: 1px solid #ddd;
             font-weight: 600;
             font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            color: white;
         }
         
         .filter-select-all {
@@ -193,10 +197,48 @@
             text-decoration: underline;
         }
         
-        .selected-count {
-            font-size: 0.8rem;
-            color: #e0e0e0;
-            margin-top: 4px;
+        .filter-search {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            outline: none;
+            font-size: 0.9rem;
+        }
+        
+        .filter-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+            font-size: 0.9rem;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(0, 158, 227, 0.2);
+        }
+        
+        .filter-input::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+        
+        .filter-input .placeholder {
+            color: #aaa;
         }
         
         .main-content {
@@ -231,10 +273,10 @@
             color: white;
         }
         
-        /* Estilos para os cards de indicadores */
+        /* Estilos para os novos cards de indicadores */
         .indicators-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin-bottom: 1rem;
         }
@@ -245,28 +287,29 @@
             padding: 1rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
             height: var(--card-height);
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer;
             border-left: 4px solid var(--secondary-color);
         }
         
-        .indicator-card:hover {
+        .indicator-card.static {
+            cursor: default;
+        }
+        
+        .indicator-card:hover:not(.static) {
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         
-        .indicator-card.active {
-            border: 2px solid var(--secondary-color);
-            background-color: rgba(0, 158, 227, 0.05);
-        }
-        
-        .card-header {
+        .card-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            width: 100%;
         }
         
         .card-title {
@@ -275,66 +318,10 @@
             color: var(--primary-color);
         }
         
-        .card-icon {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background-color: rgba(0, 92, 128, 0.1);
-            color: var(--primary-color);
-        }
-        
         .card-value {
             font-size: 1.8rem;
             font-weight: 700;
-            margin: auto 0;
             color: var(--dark-color);
-        }
-        
-        .card-comparison {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: auto;
-        }
-        
-        .card-comparison.positive {
-            color: #28a745;
-        }
-        
-        .card-comparison.negative {
-            color: #dc3545;
-        }
-        
-        /* Estilo para as barras de distribuição */
-        .area-distribution {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .area-bar {
-            flex: 1;
-            height: 8px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .area-progress {
-            height: 100%;
-            background-color: var(--secondary-color);
-            border-radius: 4px;
-        }
-        
-        .area-percentage {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            min-width: 40px;
-            text-align: right;
         }
         
         .map-container {
@@ -485,67 +472,6 @@
             background-color: var(--primary-color);
         }
         
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-        
-        .modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: black;
-        }
-        
-        .area-list {
-            margin-top: 1rem;
-        }
-        
-        .area-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .area-name {
-            font-weight: 500;
-        }
-        
-        .area-count {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        
-        .chart-container {
-            margin-top: 1rem;
-            height: 300px;
-            position: relative;
-        }
-        
         @media (max-width: 768px) {
             .search-container {
                 flex-direction: column;
@@ -566,11 +492,6 @@
             .map-container, .table-container {
                 height: calc(55% - var(--card-height) - 1rem);
             }
-            
-            .modal-content {
-                width: 95%;
-                margin: 5% auto;
-            }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -582,7 +503,7 @@
                 <div class="header-title">
                     <h1><b>Cursos de Pós-Graduação - IFPE</b></h1>
                 </div>
-                <img src="https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/7ccedef003925289017c65d673e92484aaa43c8d/mapa-cursos-posgraduacao-ifpe/logo.png" 
+                <img src="https://github.com/tiagopessoalima/PROPESQ/raw/f5ca378ae543e98c198adbb9fa4fedc058e34773/mapa-cursos-posgraduacao-ifpe/logo.png" 
                      alt="Logo IFPE" 
                      class="header-logo">
             </div>
@@ -593,54 +514,48 @@
                 </div>
                 
                 <div class="search-group">
-                    <label for="area">Pesquisar por área:</label>
-                    <div class="filter-select-wrapper">
-                        <select id="area" multiple style="display: none;">
-                            <option value="">Todas as áreas</option>
-                        </select>
-                        <div class="filter-checkbox-container" id="area-checkbox-container">
-                            <div class="filter-header">
-                                <span>Selecionar áreas</span>
-                                <span class="filter-select-all" data-target="area">Selecionar todas</span>
-                            </div>
-                            <div class="filter-options-list" id="area-options"></div>
-                        </div>
+                    <label>Pesquisar por área:</label>
+                    <div class="filter-input" id="area-trigger" tabindex="0">
+                        <span class="placeholder">Todas as áreas</span>
                     </div>
-                    <div class="selected-count" id="area-selected-count">Nenhuma selecionada</div>
+                    <div class="filter-checkbox-container" id="area-checkbox-container">
+                        <div class="filter-header">
+                            <span>Selecionar áreas</span>
+                            <span class="filter-select-all" data-target="area">Selecionar todas</span>
+                        </div>
+                        <input type="text" class="filter-search" placeholder="Pesquisar...">
+                        <div class="filter-options-list" id="area-options"></div>
+                    </div>
                 </div>
                 
                 <div class="search-group">
-                    <label for="type">Pesquisar por tipo:</label>
-                    <div class="filter-select-wrapper">
-                        <select id="type" multiple style="display: none;">
-                            <option value="">Todos os tipos</option>
-                        </select>
-                        <div class="filter-checkbox-container" id="type-checkbox-container">
-                            <div class="filter-header">
-                                <span>Selecionar tipos</span>
-                                <span class="filter-select-all" data-target="type">Selecionar todos</span>
-                            </div>
-                            <div class="filter-options-list" id="type-options"></div>
-                        </div>
+                    <label>Pesquisar por tipo:</label>
+                    <div class="filter-input" id="type-trigger" tabindex="0">
+                        <span class="placeholder">Todos os tipos</span>
                     </div>
-                    <div class="selected-count" id="type-selected-count">Nenhuma selecionada</div>
+                    <div class="filter-checkbox-container" id="type-checkbox-container">
+                        <div class="filter-header">
+                            <span>Selecionar tipos</span>
+                            <span class="filter-select-all" data-target="type">Selecionar todos</span>
+                        </div>
+                        <input type="text" class="filter-search" placeholder="Pesquisar...">
+                        <div class="filter-options-list" id="type-options"></div>
+                    </div>
                 </div>
                 
                 <div class="search-group">
-                    <label for="region">Pesquisar por região:</label>
-                    <div class="filter-select-wrapper">
-                        <select id="region" multiple style="display: none;">
-                            <option value="">Todas as regiões</option>
-                        </select>
-                        <div class="filter-checkbox-container" id="region-checkbox-container">
-                            <div class="filter-header">
-                                <span>Selecionar regiões</span>
-                                <span class="filter-select-all" data-target="region">Selecionar todas</span>
-                            </div>
-                            <div class="filter-options-list" id="region-options"></div>
-                        </div>
+                    <label>Pesquisar por região:</label>
+                    <div class="filter-input" id="region-trigger" tabindex="0">
+                        <span class="placeholder">Todas as regiões</span>
                     </div>
-                    <div class="selected-count" id="region-selected-count">Nenhuma selecionada</div>
+                    <div class="filter-checkbox-container" id="region-checkbox-container">
+                        <div class="filter-header">
+                            <span>Selecionar regiões</span>
+                            <span class="filter-select-all" data-target="region">Selecionar todas</span>
+                        </div>
+                        <input type="text" class="filter-search" placeholder="Pesquisar...">
+                        <div class="filter-options-list" id="region-options"></div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -651,85 +566,40 @@
                 <button id="table-view-btn">Visualização em Tabela</button>
             </div>
             
-            <!-- Cards de indicadores (reordenados conforme solicitado) -->
+            <!-- Novos cards de indicadores -->
             <div class="indicators-container" id="indicators-container">
-                <!-- Primeiro card: Campus -->
-                <div class="indicator-card" id="campus-distribution-card">
-                    <div class="card-header">
-                        <div class="card-title">Distribuição por Campus</div>
-                        <div class="card-icon">🏫</div>
+                <!-- Card: Total de Cursos -->
+                <div class="indicator-card" id="total-courses-card">
+                    <div class="card-content">
+                        <div class="card-title">Total de Cursos</div>
+                        <div class="card-value" id="total-courses">-</div>
                     </div>
-                    <div class="card-value" id="top-campus">-</div>
-                    <div class="area-distribution">
-                        <div class="area-bar">
-                            <div class="area-progress" id="campus-progress" style="width: 0%"></div>
-                        </div>
-                        <div class="area-percentage" id="campus-percentage">0%</div>
-                    </div>
-                    <div class="card-comparison" id="campus-count">Clique para ver gráfico</div>
                 </div>
                 
-                <!-- Segundo card: Região -->
-                <div class="indicator-card" id="regional-courses-card">
-                    <div class="card-header">
-                        <div class="card-title">Distribuição por Região</div>
-                        <div class="card-icon">🌎</div>
+                <!-- Card: Cursos Stricto Sensu -->
+                <div class="indicator-card" id="stricto-sensu-card">
+                    <div class="card-content">
+                        <div class="card-title">Cursos Stricto Sensu</div>
+                        <div class="card-value" id="stricto-sensu-courses">-</div>
                     </div>
-                    <div class="card-value" id="top-region">-</div>
-                    <div class="area-distribution">
-                        <div class="area-bar">
-                            <div class="area-progress" id="region-progress" style="width: 0%"></div>
-                        </div>
-                        <div class="area-percentage" id="region-percentage">0%</div>
-                    </div>
-                    <div class="card-comparison" id="region-count">Clique para ver gráfico</div>
                 </div>
                 
-                <!-- Terceiro card: Área -->
-                <div class="indicator-card" id="area-distribution-card">
-                    <div class="card-header">
-                        <div class="card-title">Distribuição por Área</div>
-                        <div class="card-icon">📚</div>
+                <!-- Card: Cursos Lato Sensu -->
+                <div class="indicator-card" id="lato-sensu-card">
+                    <div class="card-content">
+                        <div class="card-title">Cursos Lato Sensu</div>
+                        <div class="card-value" id="lato-sensu-courses">-</div>
                     </div>
-                    <div class="card-value" id="top-area">-</div>
-                    <div class="area-distribution">
-                        <div class="area-bar">
-                            <div class="area-progress" id="area-progress" style="width: 0%"></div>
-                        </div>
-                        <div class="area-percentage" id="area-percentage">0%</div>
-                    </div>
-                    <div class="card-comparison" id="area-count">Clique para ver gráfico</div>
                 </div>
                 
-                <!-- Quarto card: Tipo -->
-                <div class="indicator-card" id="type-distribution-card">
-                    <div class="card-header">
-                        <div class="card-title">Distribuição por Tipo</div>
-                        <div class="card-icon">📋</div>
-                    </div>
-                    <div class="card-value" id="type-distribution">-</div>
-                    <div class="area-distribution">
-                        <div class="area-bar">
-                            <div class="area-progress" id="type-progress" style="width: 0%"></div>
-                        </div>
-                        <div class="area-percentage" id="type-percentage">0%</div>
-                    </div>
-                    <div class="card-comparison" id="type-count">Clique para ver gráfico</div>
-                </div>
-           
-            
-
-		<!-- Quinto card: Estudantes Formados (ESTÁTICO) -->
+                <!-- Card: Estudantes Formados (ESTÁTICO) -->
                 <div class="indicator-card static" id="students-card">
-                    <div class="card-header">
-                        <div class="card-title">Estudantes Formados</div>
-                        <div class="card-icon">🎓</div>
+                    <div class="card-content">
+                        <div class="card-title">Estudantes Formados na Pós-graduação</div>
+                        <div class="card-value">2.127</div>
                     </div>
-                    <div class="card-value">2.127</div>
-                    <div class="card-comparison">Total de estudantes formados em pós-graduação</div>
                 </div>
             </div>
-
 
             <div class="map-container">
                 <div id="map">
@@ -758,67 +628,13 @@
         </main>
     </div>
 
-    <!-- Modal para distribuição por campus -->
-    <div id="campus-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Distribuição de Cursos por Campus</h2>
-            <div class="chart-container">
-                <canvas id="campus-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para distribuição por região -->
-    <div id="region-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Distribuição de Cursos por Região</h2>
-            <div class="chart-container">
-                <canvas id="region-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para distribuição por área -->
-    <div id="area-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Distribuição de Cursos por Área</h2>
-            <div class="chart-container">
-                <canvas id="area-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para distribuição por tipo -->
-    <div id="type-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Distribuição de Cursos por Tipo</h2>
-            <div class="chart-container">
-                <canvas id="type-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
         // Variáveis globais
         let map, markers = [], currentView = 'map', pernambucoLayer = null;
         let allCoursesCount = 0;
         let currentSort = { column: null, direction: 'asc' };
-        let areaDistributionData = {};
-        let typeDistributionData = {};
-        let regionalDistributionData = {};
-        let campusDistributionData = {};
         let campiData = [];
-
-        // Instâncias dos gráficos
-        let typeChart = null;
-        let regionChart = null;
-        let areaChart = null;
-        let campusChart = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             fetch('https://raw.githubusercontent.com/tiagopessoalima/PROPESQ/refs/heads/main/mapa-cursos-posgraduacao-ifpe/cursos_pos_graduacao.csv')
@@ -908,6 +724,7 @@
             updateIndicators(campiData);
 
             campiData.forEach(campus => {
+		if (campus.region === "Vários") return;
                 const markerIcon = L.divIcon({
                     className: 'custom-marker',
                     html: `<div style="background-color: ${regionColors[campus.region]}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
@@ -936,6 +753,7 @@
 
             adjustMapToVisibleMarkers();
 
+            // Legenda simplificada - apenas as cores das regiões
             const legend = L.control({ position: 'bottomright' });
             legend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'legend');
@@ -946,12 +764,6 @@
                         div.innerHTML += `<div><i style="background:${regionColors[region]}"></i> ${region}</div>`;
                     }
                 }
-                
-                div.innerHTML += `
-                    <div style="margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px;">
-                        <div><i style="background:rgba(0, 92, 128, 0.3); border: 1px solid #005c80;"></div>
-                    </div>
-                `;
                 
                 return div;
             };
@@ -977,26 +789,10 @@
             
             window.addEventListener('resize', () => map.invalidateSize());
             
-            // Configurar eventos para os cards (agora na nova ordem)
-            document.getElementById('campus-distribution-card').addEventListener('click', showCampusModal);
-            document.getElementById('regional-courses-card').addEventListener('click', showRegionModal);
-            document.getElementById('area-distribution-card').addEventListener('click', showAreaModal);
-            document.getElementById('type-distribution-card').addEventListener('click', showTypeModal);
-            
-            // Configurar eventos para fechar os modais
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                const closeBtn = modal.querySelector('.close');
-                closeBtn.addEventListener('click', () => modal.style.display = 'none');
-            });
-            
-            window.addEventListener('click', (event) => {
-                modals.forEach(modal => {
-                    if (event.target == modal) {
-                        modal.style.display = 'none';
-                    }
-                });
-            });
+            // Configurar eventos para os novos cards
+            document.getElementById('total-courses-card').addEventListener('click', showAllCourses);
+            document.getElementById('stricto-sensu-card').addEventListener('click', showStrictoSensu);
+            document.getElementById('lato-sensu-card').addEventListener('click', showLatoSensu);
         }
 
         function setupCheckboxFilters() {
@@ -1005,11 +801,13 @@
             
             filterTypes.forEach(filterType => {
                 const container = document.getElementById(`${filterType}-checkbox-container`);
-                const selectElement = document.getElementById(filterType);
-                const selectedCountElement = document.getElementById(`${filterType}-selected-count`);
+                const trigger = document.getElementById(`${filterType}-trigger`);
+                const searchInput = container.querySelector('.filter-search');
+                const defaultText = filterType === 'area' ? 'Todas as áreas' : filterType === 'type' ? 'Todos os tipos' : 'Todas as regiões';
+                const gender = filterType.endsWith('a') ? 'a' : 'o'; // Para "selecionadas" ou "selecionados"
                 
-                // Mostrar/ocultar o dropdown ao clicar no select
-                selectElement.addEventListener('click', (e) => {
+                // Mostrar/ocultar o dropdown ao clicar no trigger
+                trigger.addEventListener('click', (e) => {
                     e.preventDefault();
                     container.classList.toggle('show');
                     
@@ -1021,33 +819,45 @@
                     });
                 });
                 
-                // Atualizar contagem de selecionados
-                const updateSelectedCount = () => {
-                    const selectedOptions = Array.from(selectElement.selectedOptions);
-                    const count = selectedOptions.length;
-                    
-                    if (count === 0) {
-                        selectedCountElement.textContent = 'Nenhuma selecionada';
-                    } else if (count === 1) {
-                        selectedCountElement.textContent = '1 selecionada';
+                // Filtrar opções com base na busca
+                searchInput.addEventListener('keyup', () => {
+                    const value = searchInput.value.toLowerCase();
+                    const options = container.querySelectorAll('.filter-option');
+                    options.forEach(opt => {
+                        const label = opt.querySelector('label').textContent.toLowerCase();
+                        opt.style.display = label.includes(value) ? 'flex' : 'none';
+                    });
+                });
+                
+                // Atualizar texto do trigger
+                const updateTriggerText = () => {
+                    const checked = container.querySelectorAll('.filter-option input:checked');
+                    let text;
+                    if (checked.length === 0) {
+                        text = defaultText;
+                        trigger.innerHTML = `<span class="placeholder">${text}</span>`;
                     } else {
-                        selectedCountElement.textContent = `${count} selecionadas`;
+                        text = checked.length > 2 ? `${checked.length} selecionad${gender}s` : Array.from(checked).map(inp => inp.value).join(', ');
+                        trigger.innerHTML = text;
                     }
                 };
                 
-                // Inicializar contagem
-                updateSelectedCount();
-                
-                // Atualizar filtros quando houver mudança
-                selectElement.addEventListener('change', () => {
-                    updateSelectedCount();
-                    applyFilters();
+                // Atualizar filtros quando houver mudança em checkbox
+                const checkboxes = container.querySelectorAll('.filter-option input');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        updateTriggerText();
+                        applyFilters();
+                    });
                 });
+                
+                // Inicializar texto do trigger
+                updateTriggerText();
             });
             
             // Fechar dropdowns ao clicar fora
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.filter-select-wrapper')) {
+                if (!e.target.closest('.search-group')) {
                     document.querySelectorAll('.filter-checkbox-container').forEach(container => {
                         container.classList.remove('show');
                     });
@@ -1059,27 +869,18 @@
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const target = e.target.getAttribute('data-target');
-                    const selectElement = document.getElementById(target);
-                    const options = Array.from(selectElement.options);
+                    const container = document.getElementById(`${target}-checkbox-container`);
+                    const allCheckboxes = Array.from(container.querySelectorAll('.filter-option input'));
+                    const allSelected = allCheckboxes.every(cb => cb.checked);
                     
-                    // Verificar se já estão todas selecionadas
-                    const allSelected = options.every(option => option.selected || option.value === "");
+                    allCheckboxes.forEach(cb => {
+                        cb.checked = !allSelected;
+                    });
                     
-                    if (allSelected) {
-                        // Desselecionar todas (exceto a opção "Todas")
-                        options.forEach(option => {
-                            if (option.value !== "") option.selected = false;
-                        });
-                    } else {
-                        // Selecionar todas
-                        options.forEach(option => {
-                            if (option.value !== "") option.selected = true;
-                        });
+                    // Disparar evento de change em um checkbox para atualizar
+                    if (allCheckboxes.length > 0) {
+                        allCheckboxes[0].dispatchEvent(new Event('change'));
                     }
-                    
-                    // Disparar evento de change
-                    const event = new Event('change');
-                    selectElement.dispatchEvent(event);
                 });
             });
         }
@@ -1098,143 +899,45 @@
                 });
             });
             
-            // Preencher combobox de áreas
-            const areaSelect = document.getElementById('area');
+            // Preencher checkboxes de áreas
             const areaOptionsContainer = document.getElementById('area-options');
-            
             Array.from(areas).sort().forEach(area => {
-                const option = document.createElement('option');
-                option.value = area;
-                option.textContent = area;
-                areaSelect.appendChild(option);
-                
-                // Adicionar checkbox
                 const checkboxOption = document.createElement('div');
                 checkboxOption.className = 'filter-option';
                 checkboxOption.innerHTML = `
-                    <input type="checkbox" id="area-${area}" value="${area}">
+                    <input type="checkbox" id="area-${area}" value="${area}" checked>
                     <label for="area-${area}">${area}</label>
                 `;
                 areaOptionsContainer.appendChild(checkboxOption);
-                
-                // Sincronizar checkbox com select
-                const checkbox = checkboxOption.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                    const optionElement = Array.from(areaSelect.options).find(opt => opt.value === area);
-                    if (optionElement) {
-                        optionElement.selected = checkbox.checked;
-                        const event = new Event('change');
-                        areaSelect.dispatchEvent(event);
-                    }
-                });
             });
             
-            // Preencher combobox de tipos
-            const typeSelect = document.getElementById('type');
+            // Preencher checkboxes de tipos
             const typeOptionsContainer = document.getElementById('type-options');
-            
             Array.from(types).sort().forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                typeSelect.appendChild(option);
-                
-                // Adicionar checkbox
                 const checkboxOption = document.createElement('div');
                 checkboxOption.className = 'filter-option';
                 checkboxOption.innerHTML = `
-                    <input type="checkbox" id="type-${type}" value="${type}">
+                    <input type="checkbox" id="type-${type}" value="${type}" checked>
                     <label for="type-${type}">${type}</label>
                 `;
                 typeOptionsContainer.appendChild(checkboxOption);
-                
-                // Sincronizar checkbox com select
-                const checkbox = checkboxOption.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                    const optionElement = Array.from(typeSelect.options).find(opt => opt.value === type);
-                    if (optionElement) {
-                        optionElement.selected = checkbox.checked;
-                        const event = new Event('change');
-                        typeSelect.dispatchEvent(event);
-                    }
-                });
             });
             
-            // Preencher combobox de regiões
-            const regionSelect = document.getElementById('region');
+            // Preencher checkboxes de regiões
             const regionOptionsContainer = document.getElementById('region-options');
-            
             Array.from(regions).sort().forEach(region => {
-                const option = document.createElement('option');
-                option.value = region;
-                option.textContent = region;
-                regionSelect.appendChild(option);
-                
-                // Adicionar checkbox
                 const checkboxOption = document.createElement('div');
                 checkboxOption.className = 'filter-option';
                 checkboxOption.innerHTML = `
-                    <input type="checkbox" id="region-${region}" value="${region}">
+                    <input type="checkbox" id="region-${region}" value="${region}" checked>
                     <label for="region-${region}">${region}</label>
                 `;
                 regionOptionsContainer.appendChild(checkboxOption);
-                
-                // Sincronizar checkbox com select
-                const checkbox = checkboxOption.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                    const optionElement = Array.from(regionSelect.options).find(opt => opt.value === region);
-                    if (optionElement) {
-                        optionElement.selected = checkbox.checked;
-                        const event = new Event('change');
-                        regionSelect.dispatchEvent(event);
-                    }
-                });
-            });
-            
-            // Selecionar todas as opções por padrão (exceto a opção vazia)
-            ['area', 'type', 'region'].forEach(filterType => {
-                const select = document.getElementById(filterType);
-                const options = Array.from(select.options);
-                options.forEach(option => {
-                    if (option.value !== "") option.selected = true;
-                });
-                
-                // Sincronizar checkboxes
-                options.forEach(option => {
-                    if (option.value !== "") {
-                        const checkbox = document.getElementById(`${filterType}-${option.value}`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                        }
-                    }
-                });
-                
-                // Atualizar contagem
-                const selectedCountElement = document.getElementById(`${filterType}-selected-count`);
-                const count = options.filter(opt => opt.value !== "").length;
-                selectedCountElement.textContent = `${count} selecionadas`;
-            });
-            
-            // Sincronizar selects com checkboxes quando houver mudança
-            ['area', 'type', 'region'].forEach(filterType => {
-                const select = document.getElementById(filterType);
-                select.addEventListener('change', () => {
-                    const options = Array.from(select.options);
-                    options.forEach(option => {
-                        if (option.value !== "") {
-                            const checkbox = document.getElementById(`${filterType}-${option.value}`);
-                            if (checkbox) {
-                                checkbox.checked = option.selected;
-                            }
-                        }
-                    });
-                });
             });
         }
 
-        function getSelectedValues(selectElement) {
-            const selectedOptions = Array.from(selectElement.selectedOptions);
-            return selectedOptions.map(option => option.value).filter(value => value !== "");
+        function getSelectedValues(filterType) {
+            return Array.from(document.querySelectorAll(`#${filterType}-options .filter-option input:checked`)).map(inp => inp.value);
         }
 
         function adjustMapToVisibleMarkers() {
@@ -1297,9 +1000,9 @@
         
         function applyFilters() {
             const searchText = document.getElementById('search').value.toLowerCase();
-            const selectedAreas = getSelectedValues(document.getElementById('area'));
-            const selectedTypes = getSelectedValues(document.getElementById('type'));
-            const selectedRegions = getSelectedValues(document.getElementById('region'));
+            const selectedAreas = getSelectedValues('area');
+            const selectedTypes = getSelectedValues('type');
+            const selectedRegions = getSelectedValues('region');
             
             // Se nenhum item estiver selecionado em qualquer um dos filtros (área, tipo, região), não exibe nada
             if (selectedAreas.length === 0 || selectedTypes.length === 0 || selectedRegions.length === 0) {
@@ -1400,108 +1103,24 @@
         function updateIndicators(data) {
             const totalCourses = data.reduce((total, campus) => total + campus.courses.length, 0);
             
-            // Calcular distribuição por área
-            areaDistributionData = {};
+            // Contar cursos por tipo
+            let strictoSensuCount = 0;
+            let latoSensuCount = 0;
+            
             data.forEach(campus => {
                 campus.courses.forEach(course => {
-                    areaDistributionData[course.area] = (areaDistributionData[course.area] || 0) + 1;
+                    if (course.type === "Stricto Sensu") {
+                        strictoSensuCount++;
+                    } else if (course.type === "Lato Sensu") {
+                        latoSensuCount++;
+                    }
                 });
             });
             
-            // Calcular distribuição por tipo
-            typeDistributionData = {};
-            data.forEach(campus => {
-                campus.courses.forEach(course => {
-                    typeDistributionData[course.type] = (typeDistributionData[course.type] || 0) + 1;
-                });
-            });
-            
-            // Calcular distribuição regional
-            regionalDistributionData = {};
-            data.forEach(campus => {
-                regionalDistributionData[campus.region] = (regionalDistributionData[campus.region] || 0) + campus.courses.length;
-            });
-            
-            // Calcular distribuição por campus
-            campusDistributionData = {};
-            data.forEach(campus => {
-                campusDistributionData[campus.name] = (campusDistributionData[campus.name] || 0) + campus.courses.length;
-            });
-            
-            // Encontrar a área com mais cursos
-            let topArea = "-";
-            let maxAreaCount = 0;
-            for (const area in areaDistributionData) {
-                if (areaDistributionData[area] > maxAreaCount) {
-                    maxAreaCount = areaDistributionData[area];
-                    topArea = area;
-                }
-            }
-            
-            // Encontrar a região com mais cursos
-            let topRegion = "-";
-            let maxRegionCount = 0;
-            for (const region in regionalDistributionData) {
-                if (regionalDistributionData[region] > maxRegionCount) {
-                    maxRegionCount = regionalDistributionData[region];
-                    topRegion = region;
-                }
-            }
-            
-            // Encontrar o campus com mais cursos
-            let topCampus = "-";
-            let maxCampusCount = 0;
-            for (const campus in campusDistributionData) {
-                if (campusDistributionData[campus] > maxCampusCount) {
-                    maxCampusCount = campusDistributionData[campus];
-                    topCampus = campus;
-                }
-            }
-            
-            // Encontrar o tipo com mais cursos
-            let topType = "-";
-            let maxTypeCount = 0;
-            for (const type in typeDistributionData) {
-                if (typeDistributionData[type] > maxTypeCount) {
-                    maxTypeCount = typeDistributionData[type];
-                    topType = type;
-                }
-            }
-            
-            // Calcular percentuais
-            const topAreaPercentage = totalCourses > 0 ? ((maxAreaCount / totalCourses) * 100).toFixed(1) : 0;
-            const topRegionPercentage = totalCourses > 0 ? ((maxRegionCount / totalCourses) * 100).toFixed(1) : 0;
-            const topCampusPercentage = totalCourses > 0 ? ((maxCampusCount / totalCourses) * 100).toFixed(1) : 0;
-            const topTypePercentage = totalCourses > 0 ? ((maxTypeCount / totalCourses) * 100).toFixed(1) : 0;
-            
-            // Atualizar indicadores
-            // Campus
-            document.getElementById('top-campus').textContent = `Top: ${topCampus}`;
-            document.getElementById('campus-progress').style.width = `${topCampusPercentage}%`;
-            document.getElementById('campus-percentage').textContent = `${topCampusPercentage}%`;
-            document.getElementById('campus-count').textContent = 
-                maxCampusCount > 0 ? `${maxCampusCount} cursos (clique para detalhes)` : "Nenhum curso";
-            
-            // Região
-            document.getElementById('top-region').textContent = `Top: ${topRegion}`;
-            document.getElementById('region-progress').style.width = `${topRegionPercentage}%`;
-            document.getElementById('region-percentage').textContent = `${topRegionPercentage}%`;
-            document.getElementById('region-count').textContent = 
-                `${Object.keys(regionalDistributionData).length} regiões (clique para detalhes)`;
-            
-            // Área
-            document.getElementById('top-area').textContent = `Top: ${topArea}`;
-            document.getElementById('area-progress').style.width = `${topAreaPercentage}%`;
-            document.getElementById('area-percentage').textContent = `${topAreaPercentage}%`;
-            document.getElementById('area-count').textContent = 
-                maxAreaCount > 0 ? `${maxAreaCount} cursos (clique para detalhes)` : "Nenhum curso";
-            
-            // Tipo
-            document.getElementById('type-distribution').textContent = `Top: ${topType}`;
-            document.getElementById('type-progress').style.width = `${topTypePercentage}%`;
-            document.getElementById('type-percentage').textContent = `${topTypePercentage}%`;
-            document.getElementById('type-count').textContent = 
-                `${Object.keys(typeDistributionData).length} tipos (clique para detalhes)`;
+            // Atualizar os cards
+            document.getElementById('total-courses').textContent = totalCourses;
+            document.getElementById('stricto-sensu-courses').textContent = strictoSensuCount;
+            document.getElementById('lato-sensu-courses').textContent = latoSensuCount;
         }
         
         function sortTable(column, updateHeader = true) {
@@ -1552,292 +1171,90 @@
             return 1;
         }
         
-        function showAreaModal() {
-            const modal = document.getElementById('area-modal');
+        // Funções para os novos cards
+        function showAllCourses() {
+            // Limpar o campo de pesquisa
+            document.getElementById('search').value = '';
             
-            // Destruir gráfico anterior se existir
-            if (areaChart) {
-                areaChart.destroy();
-            }
+            // Selecionar todas as opções nos filtros
+            selectAllOptions('area');
+            selectAllOptions('type');
+            selectAllOptions('region');
             
-            // Preparar dados para o gráfico
-            const areas = Object.keys(areaDistributionData);
-            const counts = Object.values(areaDistributionData);
-            const total = counts.reduce((acc, count) => acc + count, 0);
-            
-            // Ordenar as áreas por contagem (do maior para o menor)
-            const sortedIndices = counts.map((count, index) => index).sort((a, b) => counts[b] - counts[a]);
-            const sortedAreas = sortedIndices.map(i => areas[i]);
-            const sortedCounts = sortedIndices.map(i => counts[i]);
-            
-            // Criar gráfico de barras
-            const ctx = document.getElementById('area-chart').getContext('2d');
-            areaChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedAreas,
-                    datasets: [{
-                        label: 'Número de Cursos',
-                        data: sortedCounts,
-                        backgroundColor: 'rgba(0, 158, 227, 0.8)',
-                        borderColor: 'rgba(0, 158, 227, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Quantidade de Cursos'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Áreas'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                          display:false
-                        }, 
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `Quantidade: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            
-            modal.style.display = 'block';
+            // Aplicar os filtros
+            applyFilters();
         }
         
-        function showTypeModal() {
-            const modal = document.getElementById('type-modal');
+        function showStrictoSensu() {
+            // Limpar o campo de pesquisa
+            document.getElementById('search').value = '';
             
-            // Destruir gráfico anterior se existir
-            if (typeChart) {
-                typeChart.destroy();
-            }
+            // Selecionar todas as áreas e regiões
+            selectAllOptions('area');
+            selectAllOptions('region');
             
-            const total = Object.values(typeDistributionData).reduce((acc, count) => acc + count, 0);
-            
-            const ctx = document.getElementById('type-chart').getContext('2d');
-            typeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(typeDistributionData),
-                    datasets: [{
-                        label: 'Número de Cursos',
-                        data: Object.values(typeDistributionData),
-                        backgroundColor: [
-                            'rgba(0, 158, 227, 0.8)',
-                            'rgba(255, 107, 0, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 158, 227, 1)',
-                            'rgba(255, 107, 0, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Quantidade de Cursos'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Tipos de Curso'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                          display:false
-                        }, 
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `Quantidade: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
+            // No filtro de tipo, selecionar apenas "Stricto Sensu"
+            const typeContainer = document.getElementById('type-options');
+            const typeCheckboxes = typeContainer.querySelectorAll('.filter-option input');
+            typeCheckboxes.forEach(checkbox => {
+                checkbox.checked = checkbox.value === "Stricto Sensu";
             });
             
-            modal.style.display = 'block';
+            // Atualizar o texto do trigger
+            updateTriggerText('type');
+            
+            // Aplicar os filtros
+            applyFilters();
         }
-
-        function showRegionModal() {
-            const modal = document.getElementById('region-modal');
+        
+        function showLatoSensu() {
+            // Limpar o campo de pesquisa
+            document.getElementById('search').value = '';
             
-            // Destruir gráfico anterior se existir
-            if (regionChart) {
-                regionChart.destroy();
-            }
+            // Selecionar todas as áreas e regiões
+            selectAllOptions('area');
+            selectAllOptions('region');
             
-            // Preparar dados para o gráfico
-            const regions = Object.keys(regionalDistributionData);
-            const counts = Object.values(regionalDistributionData);
-            const total = counts.reduce((acc, count) => acc + count, 0);
-            
-            // Ordenar as regiões por contagem
-            const sortedIndices = counts.map((count, index) => index).sort((a, b) => counts[b] - counts[a]);
-            const sortedRegions = sortedIndices.map(i => regions[i]);
-            const sortedCounts = sortedIndices.map(i => counts[i]);
-            
-            // Cores para as regiões (usando as mesmas do mapa)
-            const regionColors = {
-                "Metropolitana": "#e41a1c",
-                "Zona da Mata": "#377eb8",
-                "Agreste": "#4daf4a",
-                "Sertão": "#984ea3",
-                "Vários": "#ff7f00"
-            };
-            
-            const backgroundColors = sortedRegions.map(region => regionColors[region] || '#999999');
-            
-            // Criar gráfico de barras
-            const ctx = document.getElementById('region-chart').getContext('2d');
-            regionChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedRegions,
-                    datasets: [{
-                        label: 'Número de Cursos',
-                        data: sortedCounts,
-                        backgroundColor: backgroundColors,
-                        borderColor: backgroundColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Quantidade de Cursos'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Regiões'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                          display:false
-                        }, 
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `Quantidade: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
+            // No filtro de tipo, selecionar apenas "Lato Sensu"
+            const typeContainer = document.getElementById('type-options');
+            const typeCheckboxes = typeContainer.querySelectorAll('.filter-option input');
+            typeCheckboxes.forEach(checkbox => {
+                checkbox.checked = checkbox.value === "Lato Sensu";
             });
             
-            modal.style.display = 'block';
+            // Atualizar o texto do trigger
+            updateTriggerText('type');
+            
+            // Aplicar os filtros
+            applyFilters();
         }
-
-        function showCampusModal() {
-            const modal = document.getElementById('campus-modal');
-            
-            // Destruir gráfico anterior se existir
-            if (campusChart) {
-                campusChart.destroy();
-            }
-            
-            // Preparar dados para o gráfico
-            const campuses = Object.keys(campusDistributionData);
-            const counts = Object.values(campusDistributionData);
-            const total = counts.reduce((acc, count) => acc + count, 0);
-            
-            // Ordenar os campi por contagem (do maior para o menor)
-            const sortedIndices = counts.map((count, index) => index).sort((a, b) => counts[b] - counts[a]);
-            const sortedCampuses = sortedIndices.map(i => campuses[i]);
-            const sortedCounts = sortedIndices.map(i => counts[i]);
-            
-            // Criar gráfico de barras
-            const ctx = document.getElementById('campus-chart').getContext('2d');
-            campusChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedCampuses,
-                    datasets: [{
-                        label: 'Número de Cursos',
-                        data: sortedCounts,
-                        backgroundColor: 'rgba(255, 107, 0, 0.8)',
-                        borderColor: 'rgba(255, 107, 0, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Quantidade de Cursos'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Campi'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                          display:false
-                        }, 
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `Quantidade: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
+        
+        // Função auxiliar para selecionar todas as opções em um filtro
+        function selectAllOptions(filterType) {
+            const container = document.getElementById(`${filterType}-options`);
+            const checkboxes = container.querySelectorAll('.filter-option input');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
             });
+            updateTriggerText(filterType);
+        }
+        
+        // Função para atualizar o texto do trigger
+        function updateTriggerText(filterType) {
+            const container = document.getElementById(`${filterType}-checkbox-container`);
+            const trigger = document.getElementById(`${filterType}-trigger`);
+            const defaultText = filterType === 'area' ? 'Todas as áreas' : filterType === 'type' ? 'Todos os tipos' : 'Todas as regiões';
+            const gender = filterType.endsWith('a') ? 'a' : 'o'; // Para "selecionadas" ou "selecionados"
             
-            modal.style.display = 'block';
+            const checked = container.querySelectorAll('.filter-option input:checked');
+            let text;
+            if (checked.length === 0) {
+                text = defaultText;
+                trigger.innerHTML = `<span class="placeholder">${text}</span>`;
+            } else {
+                text = checked.length > 2 ? `${checked.length} selecionad${gender}s` : Array.from(checked).map(inp => inp.value).join(', ');
+                trigger.innerHTML = text;
+            }
         }
     </script>
 </body>
