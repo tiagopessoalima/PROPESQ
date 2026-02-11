@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics IC&T IFPE - Painel Integrado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --primary: #0f172a; --accent: #2563eb; --bg-body: #f8fafc; --bg-card: #ffffff;
+            --text-main: #1e293b; --text-muted: #64748b; --border: #e2e8f0;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); padding-bottom: 60px; -webkit-font-smoothing: antialiased; }
+        
+        .navbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand i { background: var(--primary); color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.1rem; }
+        .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+        .brand p { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+
+        .tabs { display: flex; gap: 8px; justify-content: center; margin: 25px 0; padding: 5px; background: #e2e8f0; width: fit-content; margin-left: auto; margin-right: auto; border-radius: 8px; }
+        .tab-btn { background: none; border: none; padding: 8px 24px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s ease; font-size: 0.9rem; }
+        .tab-btn.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        .view-section { display: none; max-width: 1400px; margin: 0 auto; padding: 0 24px; animation: fadeIn 0.4s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
+
+        .card { background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
+        .card-h { font-size: 1rem; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--primary); }
+        .card-h span:first-child { color: var(--primary); }
+        .chart-box { position: relative; height: 320px; width: 100%; }
+        .radar-box { height: 340px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+        .radar-box canvas { max-width: 100%; }
+
+        /* Section Headers */
+        .section-header { margin: 32px 0 20px 0; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+        .section-header h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; }
+        .section-header h2 i { font-size: 1.3rem; }
+        .section-header p { font-size: 0.8rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4; }
+
+        /* Badge System */
+        .badge-categoria { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .badge-visao { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e40af; }
+        .badge-territorial { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); color: #9f1239; }
+        .badge-social { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
+
+        /* Enhanced Cards */
+        .card-enhanced { border-left: 4px solid transparent; transition: all 0.3s ease; }
+        .card-enhanced.blue { border-left-color: #2563eb; }
+        .card-enhanced.purple { border-left-color: #8b5cf6; }
+        .card-enhanced.orange { border-left-color: #f59e0b; }
+        .card-enhanced.green { border-left-color: #10b981; }
+        .card-enhanced:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.15); }
+
+        /* Mini KPI */
+        .mini-kpi { display: flex; justify-content: space-around; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+        .mini-kpi-item { text-align: center; }
+        .mini-kpi-item .value { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .mini-kpi-item .label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; }
+
+        /* Interactive Cards */
+        .interactive-card { cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .interactive-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); border-color: var(--accent); }
+        .interactive-card.selected { border-color: var(--accent); background: #eff6ff; }
+        .interactive-card .icon-box { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 15px; }
+        .interactive-card h3 { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 3px; }
+        .interactive-card .value { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin: 2px 0; }
+        .interactive-card .meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+        .click-hint { position: absolute; top: 15px; right: 15px; font-size: 0.7rem; color: var(--accent); opacity: 0; transition: opacity 0.2s; }
+        .interactive-card:hover .click-hint { opacity: 1; }
+
+        /* KPI Cards */
+        .kpi { display: flex; align-items: center; gap: 16px; flex-direction: row; }
+        .kpi-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .kpi-val { font-size: 1.75rem; font-weight: 700; line-height: 1.1; color: var(--primary); letter-spacing: -1px; }
+        .kpi-lbl { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+        /* Colors */
+        .bg-blue { background: #eff6ff; color: #2563eb; } .bg-green { background: #ecfdf5; color: #10b981; }
+        .bg-purple { background: #f5f3ff; color: #8b5cf6; } .bg-orange { background: #fff7ed; color: #f59e0b; }
+        .c-blue { background: #eff6ff; color: #2563eb; } .c-green { background: #ecfdf5; color: #10b981; }
+        .c-purple { background: #f5f3ff; color: #8b5cf6; } .c-orange { background: #fff7ed; color: #f59e0b; }
+
+        .chart-bottom-legend { margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-size: 0.75rem; color: #64748b; }
+        .legend-item { display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 4px 10px; border-radius: 6px; border: 1px solid #f1f5f9; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-green { background-color: var(--success); } .dot-blue { background-color: var(--accent); } .dot-orange { background-color: var(--warning); } .dot-slate { background-color: #94a3b8; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .bg-mid { background: #fef9c3; color: #854d0e; }
+
+        /* Controls */
+        .controls { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        select { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; background-color: #f8fafc; color: var(--text-main); font-weight: 500; cursor: pointer; outline: none; }
+        .money-bar { transition: opacity 0.2s; cursor: help; }
+        .money-bar:hover { opacity: 0.8; }
+        
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Raio-X Sections */
+        .raio-x-section { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Gauge */
+        .gauge-wrapper { position: relative; width: 200px; height: 100px; margin: 0 auto; overflow: hidden; }
+        .gauge-arc { width: 200px; height: 200px; border-radius: 50%; border: 25px solid #e2e8f0; border-bottom-color: transparent; border-left-color: transparent; border-right-color: transparent; transform: rotate(-45deg); box-sizing: border-box; }
+        .gauge-fill { position: absolute; top: 0; left: 0; width: 200px; height: 200px; border-radius: 50%; border: 25px solid transparent; border-top-color: var(--accent); transform: rotate(-45deg); transform-origin: center; transition: transform 1s ease-out; z-index: 2; box-sizing: border-box; }
+        .gauge-score { text-align: center; margin-top: -45px; font-size: 2.8rem; font-weight: 800; color: var(--primary); position: relative; z-index: 5; }
+        .gauge-label { text-align: center; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 5px; }
+
+        @media(max-width: 1024px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } .controls { flex-direction: column; gap: 15px; text-align: left; } .controls > div { width: 100%; text-align: left !important; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fas fa-chart-network"></i>
+            <div>
+                <h1>IFPE Analytics Pro</h1>
+                <p>Inteligência de Dados: Submissões & Execução</p>
+            </div>
+        </div>
+    </nav>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('submissoes', this)">Submissões</button>
+        <button class="tab-btn" onclick="switchTab('execucao', this)">Em Execução</button>
+        <button class="tab-btn" onclick="switchTab('campus', this)">Raio-X Unidade</button>
+    </div>
+
+    <div id="view-submissoes" class="view-section active">
+        <div class="controls">
+            <div style="flex:1;">
+                <h3 style="margin:0; color:var(--primary); font-size:1.1rem; font-weight:700;">Visão de Submissões</h3>
+                <label style="font-size:0.8rem; color:#64748b;">Filtre os dados de entrada por unidade</label>
+                <div style="margin-top: 8px; font-size: 0.75rem; color: var(--accent); font-weight: 500;">
+                    <i class="fas fa-database" style="margin-right: 4px;"></i> 
+                    Dados consolidados do processo de submissão <strong>PIBIC/PIBIT 2025</strong>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <select id="sub-campus-select">
+                    <option value="Global" selected>Visão Global (Todos)</option>
+                    <option value="Abreu e Lima">Abreu e Lima</option>
+                    <option value="Afogados da Ingazeira">Afogados da Ingazeira</option>
+                    <option value="Barreiros">Barreiros</option>
+                    <option value="Belo Jardim">Belo Jardim</option>
+                    <option value="Cabo de Santo Agostinho">Cabo de Santo Agostinho</option>
+                    <option value="Caruaru">Caruaru</option>
+                    <option value="Garanhus">Garanhuns</option>
+                    <option value="Igarassu">Igarassu</option>
+                    <option value="Ipojuca">Ipojuca</option>
+                    <option value="Jaboatão dos Guararapes">Jaboatão dos Guararapes</option>
+                    <option value="Olinda">Olinda</option>
+                    <option value="Palmares">Palmares</option>
+                    <option value="Paulista">Paulista</option>
+                    <option value="Pesqueira">Pesqueira</option>
+                    <option value="Recife">Recife</option>
+                    <option value="Vitória de Santo Antão">Vitória de Santo Antão</option>
+                </select>
+            </div>
+        </div>
+
+        <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Clique nos cards abaixo para detalhar a distribuição gráfica.
+        </p>
+        <div class="grid-4">
+            <div class="card interactive-card selected" style="padding: 12px;" onclick="renderSubChart('Titulação', this)">
+                <h3><i class="fas fa-user-graduate" style="margin-right: 8px; color: #2563eb;"></i>Qualificação Docente</h3>
+                <div class="value" id="card-tit-val">-</div>
+                <div class="meta" id="card-tit-meta">-</div>
+            </div>
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderSubChart('Objetivos de Desenvolvimento Sustentável', this)">
+                <h3><i class="fas fa-globe-americas" style="margin-right: 8px; color: #10b981;"></i>Agenda 2030 (ODS)</h3>
+                <div class="value" id="card-ods-val">-</div>
+                <div class="meta" id="card-ods-meta">Principal ODS</div>
+            </div>
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderSubChart('Projeto cadastrado é de pesquisa', this)">
+                <h3><i class="fas fa-microscope" style="margin-right: 8px; color: #8b5cf6;"></i>Natureza da Pesquisa</h3>
+                <div class="value" id="card-nat-val">-</div>
+                <div class="meta" id="card-nat-meta">-</div>
+            </div>
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderSubChart('Projeto cadastrado possui apoio financeiro de agência de fomento', this)">
+                <h3><i class="fas fa-hand-holding-dollar" style="margin-right: 8px; color: #f59e0b;"></i>Captação de Fomento</h3>
+                <div class="value" id="card-fom-val">-</div>
+                <div class="meta" id="card-fom-meta">-</div>
+            </div>
+        </div>
+
+        <div class="card" style="min-height: 400px;">
+            <div class="card-h">
+                <span id="sub-chart-title">Distribuição por Titulação dos Orientadores (Únicos)</span>
+            </div>
+            <div class="chart-box">
+                <canvas id="dynamicSubChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-execucao" class="view-section">
+        <div class="controls">
+            <div style="flex:1;">
+                <h3 style="margin:0; color:var(--primary); font-size:1.1rem; font-weight:700;">Painel de Execução</h3>
+                <label style="font-size:0.8rem; color:#64748b;">Acompanhamento macro dos projetos ativos</label>
+                <div style="margin-top: 8px; font-size: 0.75rem; color: var(--success); font-weight: 500;">
+                    <i class="fas fa-check-circle" style="margin-right: 4px;"></i>
+                    Dados referentes às <strong>submissões aprovadas</strong> e em vigência.
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <select id="exec-region-select" onchange="updateExecView()">
+                    <option value="Global" selected>Visão Global (Todas)</option>
+                    <option value="RMR">Região Metropolitana</option>
+                    <option value="Mata">Zona da Mata</option>
+                    <option value="Agreste">Agreste</option>
+                    <option value="Sertao">Sertão</option>
+                </select>
+            </div>
+        </div>
+
+        <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Selecione um indicador estratégico para visualizar a distribuição na rede.
+        </p>
+
+        <div class="grid-4">
+            <div class="card interactive-card selected" style="padding: 12px;" onclick="renderExecChart('Pareto', this)">
+                <h3><i class="fas fa-users" style="margin-right: 8px; color: #2563eb;"></i>Participações (Bolsistas + Voluntários)</h3>
+                <div class="value" id="card-exec-proj">-</div>
+                <div class="meta">Total de Participações Ativas</div>
+            </div>
+            
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderExecChart('Eficiencia', this)">
+                <h3><i class="fas fa-users-viewfinder" style="margin-right: 8px; color: #10b981;"></i>Eficiência (Capilaridade)</h3>
+                <div class="value" id="card-exec-eff">-</div>
+                <div class="meta">Estudantes / 100k Hab (Média)</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderExecChart('Investimento', this)">
+                <h3><i class="fas fa-sack-dollar" style="margin-right: 8px; color: #8b5cf6;"></i>Investimento (Bolsas)</h3>
+                <div class="value" id="card-exec-inv">-</div>
+                <div class="meta" id="card-exec-inv-meta">Valor Anual Estimado</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderExecChart('InvestimentoPerCapita', this)">
+                <h3><i class="fas fa-chart-line" style="margin-right: 8px; color: #06b6d4;"></i>Investimento per Capita</h3>
+                <div class="value" id="card-exec-inv-percap">-</div>
+                <div class="meta">R$ por habitante</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderExecChart('Social', this)">
+                <h3><i class="fas fa-hand-holding-heart" style="margin-right: 8px; color: #f59e0b;"></i>Contexto Social (Vulnerabilidade)</h3>
+                <div class="value" id="card-exec-vuln">-</div>
+                <div class="meta">Bolsistas em Situação de Vulnerabilidade</div>
+            </div>
+        </div>
+
+        <div class="card" style="min-height: 400px;">
+            <div class="card-h">
+                <span id="exec-chart-title">Distribuição de Projetos</span>
+                <button class="btn-ghost" onclick="renderExecChart('Matriz', null)"><i class="fas fa-compress-arrows-alt"></i> Ver Matriz Estratégica</button>
+            </div>
+            <div class="chart-box">
+                <canvas id="dynamicExecChart"></canvas>
+            </div>
+            <div id="exec-legend" class="chart-bottom-legend" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="view-campus" class="view-section">
+        <div class="controls">
+            <div style="flex:1;">
+                <h3 style="margin:0; color:var(--primary); font-size:1.1rem; font-weight:700;">Raio-X da Unidade</h3>
+                <label style="font-size:0.8rem; color:#64748b;">Análise detalhada de projetos em execução com dados socioeconômicos</label>
+                <div style="margin-top: 8px; font-size: 0.7rem; color: var(--accent); font-weight: 500; line-height:1.4;">
+                    <i class="fas fa-database" style="margin-right: 4px;"></i> 
+                    Dados integrados: <strong>PROPESQ/IFPE 2024/2025</strong> • <strong>IBGE Censo 2022</strong> • <strong>IPEA/Atlas Brasil 2021</strong>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <select id="campus-select">
+                    <option value="ABL">Abreu e Lima</option>
+                    <option value="AFO">Afogados</option>
+                    <option value="BAR">Barreiros</option>
+                    <option value="BEL">Belo Jardim</option>
+                    <option value="CSA">Cabo de Santo Agostinho</option>
+                    <option value="CAR">Caruaru</option>
+                    <option value="GAR">Garanhuns</option>
+                    <option value="IGA">Igarassu</option>
+                    <option value="IPO">Ipojuca</option>
+                    <option value="JAB">Jaboatão</option>
+                    <option value="OLI">Olinda</option>
+                    <option value="PAL">Palmares</option>
+                    <option value="PAU">Paulista</option>
+                    <option value="PES">Pesqueira</option>
+                    <option value="REC" selected>Recife</option>
+                    <option value="VSA">Vitória de Santo Antão</option>
+                </select>
+            </div>
+        </div>
+
+        <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Selecione um indicador para visualizar o gráfico detalhado.
+        </p>
+
+        <div class="grid-4">
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Perfil', this)">
+                <h3><i class="fas fa-user-circle" style="margin-right: 8px; color: #8b5cf6;"></i>Perfil Multidimensional</h3>
+                <div class="value" id="card-rx-perfil">-</div>
+                <div class="meta">Sintese 6D: Inv, Inv/hab, PIB, Eficiencia, Inclusao, Polo</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Investimento', this)">
+                <h3><i class="fas fa-sack-dollar" style="margin-right: 8px; color: #10b981;"></i>Investimento Estimado</h3>
+                <div class="value" id="card-rx-inv">-</div>
+                <div class="meta">Bolsas CNPq + IFPE (anual)</div>
+            </div>
+            
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Retorno', this)">
+                <h3><i class="fas fa-hand-holding-dollar" style="margin-right: 8px; color: #2563eb;"></i>Investimento per Capita</h3>
+                <div class="value" id="card-rx-ret">-</div>
+                <div class="meta">Comparativo Campus/Região/Rede</div>
+            </div>
+            
+            <div class="card interactive-card selected" style="padding: 12px;" onclick="renderCampusChart('PIB', this)">
+                <h3><i class="fas fa-coins" style="margin-right: 8px; color: #2563eb;"></i>PIB per capita</h3>
+                <div class="value" id="card-rx-pib">-</div>
+                <div class="meta">PIB x Invest./hab</div>
+            </div>
+        </div>
+
+        <div class="grid-4" style="margin-top:16px;">
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Eficiencia', this)">
+                <h3><i class="fas fa-bullseye" style="margin-right: 8px; color: #f59e0b;"></i>Eficiência Territorial</h3>
+                <div class="value" id="card-rx-eff">-</div>
+                <div class="meta">Proj/100k hab × IDH</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Inclusao', this)">
+                <h3><i class="fas fa-users" style="margin-right: 8px; color: #8b5cf6;"></i>Inclusão Técnica</h3>
+                <div class="value" id="card-rx-inc">-</div>
+                <div class="meta">Juventude × IDH</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Mapa', this)">
+                <h3><i class="fas fa-map-marked" style="margin-right: 8px; color: #10b981;"></i>Polo de Encontro</h3>
+                <div class="value" id="card-rx-map">-</div>
+                <div class="meta">Deslocamento minimo (rede)</div>
+            </div>
+
+            <div class="card interactive-card" style="padding: 12px;" onclick="renderCampusChart('Insights', this)">
+                <h3><i class="fas fa-lightbulb" style="margin-right: 8px; color: #f59e0b;"></i>Próximos insights</h3>
+                <div class="value" id="card-rx-insights">Configurar</div>
+                <div class="meta">Escolha os componentes</div>
+            </div>
+        </div>
+
+        <div class="card" style="min-height: 450px; margin-top:24px;">
+            <div class="card-h">
+                <span id="campus-chart-title">PIB per capita</span>
+            </div>
+            <div id="campus-chart-container">
+                <!-- Conteúdo dinâmico dos gráficos -->
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        // --- DADOS COMPLETOS SUBMISSÕES (ATUALIZADOS) ---
+        const subDataAll = {
+          "Global": {
+            "Titulação": { "Doutorado": 167, "Mestrado": 50, "Especialização": 1 },
+            "Objetivos de Desenvolvimento Sustentável": {
+                "4 - Educação de Qualidade": 177,
+                "3 - Saúde e Bem Estar": 144,
+                "9 - Indústria, Inovação e Infraestrutura": 143,
+                "11 - Cidades e Comunidades Sustentáveis": 119,
+                "12 - Consumo e Produção Responsáveis": 105,
+                "1 - Erradicação da Pobreza": 50,
+                "2 - Fome Zero e Agricultura Sustentável": 95,
+                "5 - Igualdade de Gênero": 30,
+                "6 - Água Potável e Saneamento": 45,
+                "7 - Energia Acessível e Limpa": 60,
+                "8 - Trabalho Decente e Crescimento Econômico": 55,
+                "10 - Redução das Desigualdades": 65,
+                "13 - Ação contra a Mudança Global do Clima": 40,
+                "14 - Vida na Água": 25,
+                "15 - Vida Terrestre": 35,
+                "16 - Paz, Justiça e Instituições Eficazes": 20,
+                "17 - Parcerias e Meios de Implementação": 15
+            },
+            "Projeto cadastrado é de pesquisa": { "Aplicada": 329, "Básica": 150 },
+            "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 342, "Sim": 137 }
+          },
+          "Recife": {
+            "Titulação": { "Doutorado": 56, "Mestrado": 13 },
+            "Objetivos de Desenvolvimento Sustentável": { "9 - Indústria, Inovação e Infraestrutura": 45, "11 - Cidades e Comunidades Sustentáveis": 32, "4 - Educação de Qualidade": 63, "3 - Saúde e Bem Estar": 35, "12 - Consumo e Produção Responsáveis": 29 },
+            "Projeto cadastrado é de pesquisa": { "Aplicada": 78, "Básica": 32 },
+            "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 60, "Sim": 50 }
+          },
+          "Vitória de Santo Antão": {
+            "Titulação": { "Doutorado": 21, "Mestrado": 3 },
+            "Objetivos de Desenvolvimento Sustentável": { "2 - Fome Zero e Agricultura Sustentável": 40, "12 - Consumo e Produção Responsáveis": 27, "7 - Energia Acessível e Limpa": 17, "3 - Saúde e Bem Estar": 15 },
+            "Projeto cadastrado é de pesquisa": { "Aplicada": 38, "Básica": 18 },
+            "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 35, "Sim": 21 }
+          },
+          "Pesqueira": { "Titulação": { "Doutorado": 13, "Mestrado": 3 }, "Objetivos de Desenvolvimento Sustentável": {"3 - Saúde e Bem Estar": 18, "4 - Educação de Qualidade": 12, "9 - Indústria, Inovação e Infraestrutura": 10}, "Projeto cadastrado é de pesquisa": { "Aplicada": 20, "Básica": 12 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 25, "Sim": 7 } },
+          "Barreiros": { "Titulação": { "Doutorado": 14, "Mestrado": 3 }, "Objetivos de Desenvolvimento Sustentável": {"3 - Saúde e Bem Estar": 28, "2 - Fome Zero e Agricultura Sustentável": 15, "11 - Cidades e Comunidades Sustentáveis": 13}, "Projeto cadastrado é de pesquisa": { "Aplicada": 25, "Básica": 17 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 33, "Sim": 9 } },
+          "Garanhus": { "Titulação": { "Doutorado": 14, "Mestrado": 1 }, "Objetivos de Desenvolvimento Sustentável": {"4 - Educação de Qualidade": 23, "7 - Energia Acessível e Limpa": 15, "12 - Consumo e Produção Responsáveis": 13}, "Projeto cadastrado é de pesquisa": { "Aplicada": 35, "Básica": 6 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 41 } },
+          "Belo Jardim": { "Titulação": { "Doutorado": 16, "Mestrado": 3 }, "Objetivos de Desenvolvimento Sustentável": {"4 - Educação de Qualidade": 17, "3 - Saúde e Bem Estar": 16, "12 - Consumo e Produção Responsáveis": 9}, "Projeto cadastrado é de pesquisa": { "Aplicada": 18, "Básica": 10 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 32, "Sim": 1 } },
+          "Ipojuca": { "Titulação": { "Doutorado": 6, "Mestrado": 2 }, "Objetivos de Desenvolvimento Sustentável": {"4 - Educação de Qualidade": 11, "9 - Indústria, Inovação e Infraestrutura": 9, "10 - Redução das Desigualdades": 5}, "Projeto cadastrado é de pesquisa": { "Aplicada": 15, "Básica": 5 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 20, "Sim": 0 } },
+          "Cabo de Santo Agostinho": { "Titulação": { "Doutorado": 6, "Mestrado": 4 }, "Projeto cadastrado é de pesquisa": { "Aplicada": 10, "Básica": 6 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 16, "Sim": 0 }, "Objetivos de Desenvolvimento Sustentável": {"8 - Trabalho Decente e Crescimento Econômico": 5, "10 - Redução das Desigualdades": 5, "3 - Saúde e Bem Estar": 5} },
+          "Caruaru": { "Titulação": { "Doutorado": 4, "Mestrado": 4 }, "Projeto cadastrado é de pesquisa": { "Básica": 11, "Aplicada": 6 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 16, "Sim": 1 }, "Objetivos de Desenvolvimento Sustentável": {"10 - Redução das Desigualdades": 8, "4 - Educação de Qualidade": 7, "9 - Indústria, Inovação e Infraestrutura": 6} },
+          "Jaboatão dos Guararapes": { "Titulação": { "Doutorado": 2, "Mestrado": 2 }, "Projeto cadastrado é de pesquisa": { "Aplicada": 7 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 7 }, "Objetivos de Desenvolvimento Sustentável": {"3 - Saúde e Bem Estar": 3, "4 - Educação de Qualidade": 3, "5 - Igualdade de Gênero": 2} },
+          "Afogados da Ingazeira": { "Titulação": { "Doutorado": 5, "Mestrado": 2 }, "Projeto cadastrado é de pesquisa": { "Básica": 7, "Aplicada": 6 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 13 }, "Objetivos de Desenvolvimento Sustentável": {"4 - Educação de Qualidade": 9, "9 - Indústria, Inovação e Infraestrutura": 8, "11 - Cidades e Comunidades Sustentáveis": 6} },
+          "Igarassu": { "Titulação": { "Doutorado": 5, "Mestrado": 3, "Especialização": 1 }, "Projeto cadastrado é de pesquisa": { "Aplicada": 8, "Básica": 3 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 9, "Sim": 2 }, "Objetivos de Desenvolvimento Sustentável": {"10 - Redução das Desigualdades": 5, "8 - Trabalho Decente e Crescimento Econômico": 5, "12 - Consumo e Produção Responsáveis": 5} },
+          "Palmares": { "Titulação": { "Doutorado": 3, "Mestrado": 2 }, "Projeto cadastrado é de pesquisa": { "Básica": 4, "Aplicada": 4 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 5, "Sim": 3 }, "Objetivos de Desenvolvimento Sustentável": {"3 - Saúde e Bem Estar": 3, "4 - Educação de Qualidade": 2, "10 - Redução das Desigualdades": 2, "1 - Erradicação da Pobreza": 1, "11 - Cidades e Comunidades Sustentáveis": 1} },
+          "Olinda": { "Titulação": { "Mestrado": 2, "Doutorado": 1 }, "Projeto cadastrado é de pesquisa": { "Aplicada": 4, "Básica": 3 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Sim": 4, "Não": 3 }, "Objetivos de Desenvolvimento Sustentável": {"12 - Consumo e Produção Responsáveis": 4, "4 - Educação de Qualidade": 4, "3 - Saúde e Bem Estar": 3} },
+          "Abreu e Lima": { "Titulação": { "Doutorado": 3, "Mestrado": 1 }, "Projeto cadastrado é de pesquisa": { "Básica": 3, "Aplicada": 3 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 6 }, "Objetivos de Desenvolvimento Sustentável": {"12 - Consumo e Produção Responsáveis": 2, "16 - Paz, Justiça e Instituições Eficazes": 2, "8 - Trabalho Decente e Crescimento Econômico": 1, "9 - Indústria, Inovação e Infraestrutura": 2} },
+          "Paulista": { "Titulação": { "Mestrado": 2, "Doutorado": 1 }, "Projeto cadastrado é de pesquisa": { "Aplicada": 5 }, "Projeto cadastrado possui apoio financeiro de agência de fomento": { "Não": 5 }, "Objetivos de Desenvolvimento Sustentável": {"9 - Indústria, Inovação e Infraestrutura": 3, "11 - Cidades e Comunidades Sustentáveis": 2, "2 - Fome Zero e Agricultura Sustentável": 2} }
+        };
+
+        function getSubData(campus, metric) {
+            if (subDataAll[campus] && subDataAll[campus][metric]) {
+                return subDataAll[campus][metric];
+            }
+            if(campus !== 'Global') {
+                const globalData = subDataAll['Global'][metric];
+                const mock = {};
+                for(let k in globalData) mock[k] = Math.ceil(globalData[k] * 0.05);
+                return mock;
+            }
+            return subDataAll['Global'][metric];
+        }
+
+        // --- EXEC DATA (com dados CENSO/IBGE 2022) ---
+        const execData = {
+            "REC": { name: "Recife", distKm: 0, proj: 40, stud: 86, idh: 0.772, pop: 1488.9, pibic: 36, tech: 7, vuln: 0.34, volunteer: {sup: 16, tech: 27}, schol: {"Bolsa CNPq": 24, "Bolsa IFPE": 12}, pibPerCap: 31.8, popEstudantil: 89.5, taxaAlf: 94.2, popJovem: 18.3, vulnerability: {sup: {sim: 16, nao: 0, nao_se_aplica: 0}, tec: {sim: 14, nao: 0, nao_se_aplica: 0}} },
+            "PES": { name: "Pesqueira", distKm: 215, proj: 18, stud: 32, idh: 0.608, pop: 62.7, pibic: 24, tech: 3, vuln: 0.66, volunteer: {sup: 5, tech: 0}, schol: {"Bolsa CNPq": 7, "Bolsa IFPE": 17}, pibPerCap: 12.4, popEstudantil: 3.8, taxaAlf: 81.5, popJovem: 21.8, vulnerability: {sup: {sim: 22, nao: 0, nao_se_aplica: 0}, tec: {sim: 2, nao: 0, nao_se_aplica: 0}} },
+            "BAR": { name: "Barreiros", distKm: 109, proj: 16, stud: 39, idh: 0.621, pop: 38.3, pibic: 24, tech: 15, vuln: 0.67, volunteer: {sup: 0, tech: 0}, schol: {"Bolsa CNPq": 9, "Bolsa IFPE": 15}, pibPerCap: 10.8, popEstudantil: 2.3, taxaAlf: 79.3, popJovem: 23.1, vulnerability: {sup: {sim: 14, nao: 0, nao_se_aplica: 0}, tec: {sim: 12, nao: 0, nao_se_aplica: 0}} },
+            "GAR": { name: "Garanhuns", distKm: 230, proj: 13, stud: 38, idh: 0.673, pop: 142.5, pibic: 18, tech: 17, vuln: 0.24, volunteer: {sup: 2, tech: 1}, schol: {"Bolsa CNPq": 2, "Bolsa IFPE": 16}, pibPerCap: 15.7, popEstudantil: 7.9, taxaAlf: 86.4, popJovem: 20.2, vulnerability: {sup: {sim: 6, nao: 0, nao_se_aplica: 0}, tec: {sim: 4, nao: 0, nao_se_aplica: 0}} },
+            "BEL": { name: "Belo Jardim", distKm: 180, proj: 16, stud: 28, idh: 0.624, pop: 79.5, pibic: 13, tech: 14, vuln: 0.85, volunteer: {sup: 1, tech: 0}, schol: {"Bolsa CNPq": 3, "Bolsa IFPE": 10}, pibPerCap: 11.9, popEstudantil: 4.2, taxaAlf: 80.1, popJovem: 22.5, vulnerability: {sup: {sim: 9, nao: 0, nao_se_aplica: 0}, tec: {sim: 15, nao: 0, nao_se_aplica: 0}} },
+            "IPO": { name: "Ipojuca", distKm: 55, proj: 7, stud: 18, idh: 0.663, pop: 98.9, pibic: 2, tech: 14, vuln: 0.88, volunteer: {sup: 2, tech: 0}, schol: {"Bolsa IFPE": 2}, pibPerCap: 98.5, popEstudantil: 5.1, taxaAlf: 83.7, popJovem: 19.8, vulnerability: {sup: {sim: 3, nao: 0, nao_se_aplica: 0}, tec: {sim: 11, nao: 0, nao_se_aplica: 0}} },
+            "CSA": { name: "Cabo", distKm: 36, proj: 10, stud: 16, idh: 0.677, pop: 203.2, pibic: 13, tech: 3, vuln: 0.86, volunteer: {sup: 0, tech: 0}, schol: {"Bolsa IFPE": 13}, pibPerCap: 18.3, popEstudantil: 11.2, taxaAlf: 88.9, popJovem: 19.5, vulnerability: {sup: {sim: 10, nao: 0, nao_se_aplica: 0}, tec: {sim: 2, nao: 0, nao_se_aplica: 0}} },
+            "CAR": { name: "Caruaru", distKm: 130, proj: 7, stud: 13, idh: 0.711, pop: 378.0, pibic: 1, tech: 7, vuln: 0.08, volunteer: {sup: 0, tech: 5}, schol: {"Bolsa IFPE": 1}, pibPerCap: 19.4, popEstudantil: 21.4, taxaAlf: 89.7, popJovem: 18.9, vulnerability: {sup: {sim: 0, nao: 0, nao_se_aplica: 0}, tec: {sim: 1, nao: 0, nao_se_aplica: 0}} },
+            "JAB": { name: "Jaboatão", distKm: 22, proj: 3, stud: 12, idh: 0.717, pop: 643.7, pibic: 6, tech: 1, vuln: 0.58, volunteer: {sup: 4, tech: 1}, schol: {"Bolsa IFPE": 6}, pibPerCap: 16.2, popEstudantil: 38.1, taxaAlf: 91.3, popJovem: 17.8, vulnerability: {sup: {sim: 6, nao: 0, nao_se_aplica: 0}, tec: {sim: 1, nao: 0, nao_se_aplica: 0}} },
+            "AFO": { name: "Afogados", distKm: 390, proj: 7, stud: 11, idh: 0.635, pop: 40.2, pibic: 9, tech: 2, vuln: 0.73, volunteer: {sup: 0, tech: 0}, schol: {"Bolsa IFPE": 9}, pibPerCap: 11.2, popEstudantil: 2.1, taxaAlf: 78.9, popJovem: 24.3, vulnerability: {sup: {sim: 7, nao: 0, nao_se_aplica: 0}, tec: {sim: 2, nao: 0, nao_se_aplica: 0}} },
+            "IGA": { name: "Igarassu", distKm: 27, proj: 10, stud: 12, idh: 0.665, pop: 115.1, pibic: 10, tech: 1, vuln: 0.58, volunteer: {sup: 1, tech: 0}, schol: {"Bolsa CNPq": 3, "Bolsa IFPE": 7}, pibPerCap: 14.5, popEstudantil: 6.3, taxaAlf: 85.2, popJovem: 20.7, vulnerability: {sup: {sim: 7, nao: 0, nao_se_aplica: 0}, tec: {sim: 0, nao: 0, nao_se_aplica: 0}} },
+            "PAL": { name: "Palmares", distKm: 120, proj: 6, stud: 8, idh: 0.638, pop: 54.5, pibic: 1, tech: 0, vuln: 0.13, volunteer: {sup: 4, tech: 3}, schol: {"Bolsa CNPq": 1}, pibPerCap: 13.1, popEstudantil: 3.4, taxaAlf: 82.4, popJovem: 21.2, vulnerability: {sup: {sim: 0, nao: 0, nao_se_aplica: 0}, tec: {sim: 1, nao: 0, nao_se_aplica: 0}} },
+            "OLI": { name: "Olinda", distKm: 7, proj: 2, stud: 8, idh: 0.735, pop: 349.9, pibic: 4, tech: 4, vuln: 0.00, volunteer: {sup: 0, tech: 0}, schol: {"Bolsa CNPq": 2, "Bolsa IFPE": 2}, pibPerCap: 17.8, popEstudantil: 21.7, taxaAlf: 92.5, popJovem: 16.9, vulnerability: {sup: {sim: 0, nao: 4, nao_se_aplica: 0}, tec: {sim: 0, nao: 4, nao_se_aplica: 0}} },
+            "ABL": { name: "Abreu e Lima", distKm: 18, proj: 3, stud: 5, idh: 0.698, pop: 98.2, pibic: 0, tech: 3, vuln: 0.50, volunteer: {sup: 0, tech: 1}, schol: {"Bolsa IFPE": 3}, pibPerCap: 15.9, popEstudantil: 5.6, taxaAlf: 87.6, popJovem: 19.1, vulnerability: {sup: {sim: 1, nao: 0, nao_se_aplica: 0}, tec: {sim: 2, nao: 0, nao_se_aplica: 0}} },
+            "PAU": { name: "Paulista", distKm: 16, proj: 2, stud: 4, idh: 0.702, pop: 342.1, pibic: 4, tech: 0, vuln: 0.50, volunteer: {sup: 0, tech: 0}, schol: {"Bolsa IFPE": 4}, pibPerCap: 16.7, popEstudantil: 18.3, taxaAlf: 90.1, popJovem: 17.5, vulnerability: {sup: {sim: 2, nao: 0, nao_se_aplica: 0}, tec: {sim: 0, nao: 0, nao_se_aplica: 0}} },
+            "VSA": { name: "Vitória", distKm: 47, proj: 21, stud: 48, idh: 0.640, pop: 134.1, pibic: 36, tech: 8, vuln: 0.83, volunteer: {sup: 2, tech: 2}, schol: {"Bolsa CNPq": 7, "Bolsa IFPE": 29}, pibPerCap: 13.8, popEstudantil: 7.5, taxaAlf: 83.1, popJovem: 21.5, vulnerability: {sup: {sim: 32, nao: 0, nao_se_aplica: 0}, tec: {sim: 8, nao: 0, nao_se_aplica: 0}} }
+        };
+
+        // --- MAPA DE REGIÕES PARA FILTRO ---
+        const regionsMap = {
+            "RMR": ["REC", "IPO", "CSA", "JAB", "IGA", "OLI", "ABL", "PAU"],
+            "Mata": ["BAR", "PAL", "VSA"],
+            "Agreste": ["PES", "GAR", "BEL", "CAR"],
+            "Sertao": ["AFO"]
+        };
+
+        // Helpers for contextual comparisons (campus x região x rede)
+        function getRegionForCampus(code) {
+            for (const [region, list] of Object.entries(regionsMap)) {
+                if (list.includes(code)) return region;
+            }
+            return 'Global';
+        }
+
+        function getMaxInvPerCap() {
+            const vals = Object.values(execData).map(item => {
+                const inv = calcGlobalInv(item);
+                return item.pop > 0 ? inv.total / (item.pop * 1000) : 0;
+            });
+            return vals.length ? Math.max(...vals) : 0;
+        }
+
+        function calcRadarMetrics(item, maxProj, maxInvPerCap) {
+            const inv = calcGlobalInv(item);
+            const invPerCap = item.pop > 0 ? inv.total / (item.pop * 1000) : 0;
+            const tecBase = (item.pibic + item.tech) || 1;
+            return {
+                volume: (item.proj / maxProj) * 100,
+                idh: item.idh * 100,
+                vuln: item.vuln * 100,
+                tecShare: (item.tech / tecBase) * 100,
+                invest: maxInvPerCap > 0 ? (invPerCap / maxInvPerCap) * 100 : 0
+            };
+        }
+
+        function getAggregateMetrics(codes, maxProj, maxInvPerCap) {
+            const items = codes.map(code => execData[code]).filter(Boolean);
+            if (!items.length) return { volume: 0, idh: 0, vuln: 0, tecShare: 0, invest: 0 };
+            const totals = items.map(item => calcRadarMetrics(item, maxProj, maxInvPerCap))
+                .reduce((acc, cur) => ({
+                    volume: acc.volume + cur.volume,
+                    idh: acc.idh + cur.idh,
+                    vuln: acc.vuln + cur.vuln,
+                    tecShare: acc.tecShare + cur.tecShare,
+                    invest: acc.invest + cur.invest
+                }), { volume: 0, idh: 0, vuln: 0, tecShare: 0, invest: 0 });
+            const len = items.length;
+            return {
+                volume: totals.volume / len,
+                idh: totals.idh / len,
+                vuln: totals.vuln / len,
+                tecShare: totals.tecShare / len,
+                invest: totals.invest / len
+            };
+        }
+
+        function getProfileScale() {
+            const allCodes = Object.keys(execData);
+            const maxInvTotal = Math.max(...allCodes.map(k => calcGlobalInv(execData[k]).total));
+            const maxInvPerCap = getMaxInvPerCap();
+            const maxPibPerCap = Math.max(...allCodes.map(k => execData[k].pibPerCap || 0));
+            const maxEffTerr = Math.max(...allCodes.map(k => {
+                const it = execData[k];
+                return it.pop > 0 ? (it.stud / it.pop) * 100 : 0;
+            }));
+            const maxInc = Math.max(...allCodes.map(k => execData[k].popJovem || 0));
+            const distanceByCode = allCodes.reduce((acc, code) => {
+                acc[code] = computeWeightedAvgDistance(code, allCodes);
+                return acc;
+            }, {});
+            const distValues = Object.values(distanceByCode).filter(v => Number.isFinite(v));
+            const maxDist = distValues.length ? Math.max(...distValues) : 0;
+            const minDist = distValues.length ? Math.min(...distValues) : 0;
+            const distScore = (dist) => {
+                if (!Number.isFinite(dist) || maxDist === minDist) return 0;
+                return ((maxDist - dist) / (maxDist - minDist)) * 100;
+            };
+            return { allCodes, maxInvTotal, maxInvPerCap, maxPibPerCap, maxEffTerr, maxInc, distanceByCode, distScore };
+        }
+
+        function calcProfileComponents(code, scale) {
+            const c = execData[code];
+            if (!c) return null;
+            const invTotal = calcGlobalInv(c).total;
+            const invPerCap = c.pop > 0 ? invTotal / (c.pop * 1000) : 0;
+            const pibPerCap = c.pibPerCap || 0;
+            const effTerr = c.pop > 0 ? (c.stud / c.pop) * 100 : 0;
+            const inc = c.popJovem || 0;
+            const dist = scale.distanceByCode[code];
+            const scores = [
+                scale.maxInvTotal ? (invTotal / scale.maxInvTotal) * 100 : 0,
+                scale.maxInvPerCap ? (invPerCap / scale.maxInvPerCap) * 100 : 0,
+                scale.maxPibPerCap ? (pibPerCap / scale.maxPibPerCap) * 100 : 0,
+                scale.maxEffTerr ? (effTerr / scale.maxEffTerr) * 100 : 0,
+                scale.maxInc ? (inc / scale.maxInc) * 100 : 0,
+                scale.distScore(dist)
+            ];
+            return { scores, invTotal, invPerCap, pibPerCap, effTerr, inc, dist };
+        }
+
+        function getAverageProfileScores(codes, scale) {
+            const list = codes.map(code => calcProfileComponents(code, scale)).filter(Boolean);
+            if (!list.length) return Array(6).fill(0);
+            const sums = list.reduce((acc, item) => {
+                item.scores.forEach((val, idx) => {
+                    acc[idx] += val;
+                });
+                return acc;
+            }, Array(6).fill(0));
+            return sums.map(val => val / list.length);
+        }
+
+        const pal = { g: '#10b981', b: '#2563eb', o: '#f59e0b', r: '#ef4444', p: '#8b5cf6' };
+        let charts = {};
+        let activeSubChart = null;
+        let activeExecChart = null; // Chart instance for Exec tab
+        let currentSubMetric = 'Titulação';
+        let currentExecMetric = 'Pareto'; // Track current chart type for Exec
+
+        function switchTab(t, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-'+t).classList.add('active');
+            if(t === 'execucao') updateExecView(); // Initialize Exec view
+            if(t === 'campus') {
+                // Aguarda o DOM estar pronto e então atualiza
+                setTimeout(() => {
+                    currentCampusCode = document.getElementById('campus-select').value;
+                    console.log('switchTab: Chamando updateCampus com', currentCampusCode);
+                    updateCampus(currentCampusCode);
+                }, 50);
+            }
+        }
+
+        let activeCampusChart = null;
+        let currentCampusCode = 'REC';
+        let currentCampusChartType = 'PIB'; // Rastreia qual gráfico está sendo exibido
+
+        function renderCampusChart(chartType, cardElement) {
+            // Update selected card
+            document.querySelectorAll('#view-campus .interactive-card').forEach(c => c.classList.remove('selected'));
+            if(cardElement) cardElement.classList.add('selected');
+            
+            currentCampusChartType = chartType; // Salva o tipo de gráfico atual
+
+            const container = document.getElementById('campus-chart-container');
+            const c = execData[currentCampusCode];
+            if(!c) return;
+
+            // Clear previous chart
+            if(activeCampusChart) activeCampusChart.destroy();
+            
+            if(chartType === 'PIB') {
+                document.getElementById('campus-chart-title').innerText = 'PIB per capita x Investimento per capita';
+
+                const invCampus = calcGlobalInv(c);
+                const invPerCapCampus = c.pop > 0 ? (invCampus.total / (c.pop * 1000)) : 0;
+                const pibCampus = c.pibPerCap || 0;
+
+                const region = getRegionForCampus(currentCampusCode);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                const regionPib = regionCodes.length ? regionCodes.reduce((sum, k) => sum + (execData[k].pibPerCap || 0), 0) / regionCodes.length : 0;
+                const regionInvPerCap = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                    const it = execData[k];
+                    const inv = calcGlobalInv(it);
+                    return sum + (it.pop > 0 ? inv.total / (it.pop * 1000) : 0);
+                }, 0) / regionCodes.length : 0;
+                const networkPib = Object.keys(execData).length ? Object.keys(execData).reduce((sum, k) => sum + (execData[k].pibPerCap || 0), 0) / Object.keys(execData).length : 0;
+                const networkInvPerCap = Object.keys(execData).length ? Object.keys(execData).reduce((sum, k) => {
+                    const it = execData[k];
+                    const inv = calcGlobalInv(it);
+                    return sum + (it.pop > 0 ? inv.total / (it.pop * 1000) : 0);
+                }, 0) / Object.keys(execData).length : 0;
+
+                const values = [pibCampus, regionPib, networkPib];
+                const maxValue = Math.max(...values);
+                const minValue = Math.min(...values);
+
+                const getCor = (val) => {
+                    if (val === maxValue) return '#16a34a';
+                    if (val === minValue) return '#dc2626';
+                    return '#64748b';
+                };
+
+                const getBordaCor = (val) => {
+                    if (val === maxValue) return '#16a34a';
+                    if (val === minValue) return '#dc2626';
+                    return '#64748b';
+                };
+
+                const ratioCampus = pibCampus > 0 ? (invPerCapCampus / (pibCampus * 1000)) * 100 : 0;
+                const ratioRegion = regionPib > 0 ? (regionInvPerCap / (regionPib * 1000)) * 100 : 0;
+                const ratioNetwork = networkPib > 0 ? (networkInvPerCap / (networkPib * 1000)) * 100 : 0;
+
+                container.innerHTML = `
+                    <div style="padding:40px; text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;">
+                            📊 Fontes: IBGE Cidades (2022) + PROPESQ/IFPE (2024/2025)
+                        </div>
+
+                        <div style="margin-bottom:15px; font-weight:600; color:#475569; font-size:0.9rem;">PIB per capita (R$ mil)</div>
+                        <div style="margin-top:10px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:700px; margin-left:auto; margin-right:auto;">
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(pibCampus)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Campus</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCor(pibCampus)};">R$ ${pibCampus.toFixed(1)}k</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(regionPib)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${region === 'Global' ? 'Rede Media' : 'Regiao'}</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCor(regionPib)};">R$ ${regionPib.toFixed(1)}k</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(networkPib)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Rede</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCor(networkPib)};">R$ ${networkPib.toFixed(1)}k</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:30px; margin-bottom:15px; font-weight:600; color:#475569; font-size:0.9rem;">Investimento per capita (R$/hab)</div>
+                        <div style="margin-top:10px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:700px; margin-left:auto; margin-right:auto;">
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Campus</div>
+                                <div style="font-size:1.6rem; font-weight:700; color:#2563eb;">R$ ${invPerCapCampus.toFixed(2)}</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Invest/PIB: ${ratioCampus.toFixed(3)}%</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${region === 'Global' ? 'Rede Media' : 'Regiao'}</div>
+                                <div style="font-size:1.6rem; font-weight:700; color:#8b5cf6;">R$ ${regionInvPerCap.toFixed(2)}</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Invest/PIB: ${ratioRegion.toFixed(3)}%</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Rede</div>
+                                <div style="font-size:1.6rem; font-weight:700; color:#10b981;">R$ ${networkInvPerCap.toFixed(2)}</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Invest/PIB: ${ratioNetwork.toFixed(3)}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            else if(chartType === 'IVS') {
+                document.getElementById('campus-chart-title').innerText = 'Vulnerabilidade Social (VS) e IDH';
+                
+                // Cálculo de vulnerabilidade social (IVS)
+                const ivsCampus = c.vuln;
+                
+                // Região
+                const region = getRegionForCampus(currentCampusCode);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                const ivsRegion = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                    return sum + (execData[k].vuln || 0);
+                }, 0) / regionCodes.length : 0;
+                
+                // Rede
+                const ivsNetwork = Object.keys(execData).length ? Object.keys(execData).reduce((sum, k) => {
+                    return sum + (execData[k].vuln || 0);
+                }, 0) / Object.keys(execData).length : 0;
+                
+                // Cálculo de IDH
+                const idhCampus = c.idh;
+                const idhRegion = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                    return sum + (execData[k].idh || 0);
+                }, 0) / regionCodes.length : 0;
+                const idhNetwork = Object.keys(execData).length ? Object.keys(execData).reduce((sum, k) => {
+                    return sum + (execData[k].idh || 0);
+                }, 0) / Object.keys(execData).length : 0;
+                
+                // Determina maior e menor valor para colorir IVS
+                const valuesIVS = [ivsCampus, ivsRegion, ivsNetwork];
+                const maxValueIVS = Math.max(...valuesIVS);
+                const minValueIVS = Math.min(...valuesIVS);
+                
+                const getCorIVS = (val) => {
+                    if (val === maxValueIVS) return '#16a34a'; // verde (maior vulnerabilidade = mais inserção social)
+                    if (val === minValueIVS) return '#dc2626'; // vermelho (menor vulnerabilidade)
+                    return '#64748b'; // cinza padrão
+                };
+                
+                const getBordaCorIVS = (val) => {
+                    if (val === maxValueIVS) return '#16a34a';
+                    if (val === minValueIVS) return '#dc2626';
+                    return '#64748b';
+                };
+                
+                // Determina maior e menor valor para colorir IDH
+                const valuesIDH = [idhCampus, idhRegion, idhNetwork];
+                const maxValueIDH = Math.max(...valuesIDH);
+                const minValueIDH = Math.min(...valuesIDH);
+                
+                const getCorIDH = (val) => {
+                    if (val === maxValueIDH) return '#16a34a'; // verde (maior IDH = melhor)
+                    if (val === minValueIDH) return '#dc2626'; // vermelho (menor IDH)
+                    return '#64748b'; // cinza padrão
+                };
+                
+                const getBordaCorIDH = (val) => {
+                    if (val === maxValueIDH) return '#16a34a';
+                    if (val === minValueIDH) return '#dc2626';
+                    return '#64748b';
+                };
+                
+                container.innerHTML = `
+                    <div style="padding:40px; text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;">
+                            📊 Fonte: IPEA/Atlas Brasil (2021) + PNUD Atlas (2021)
+                        </div>
+                        
+                        <div style="margin-bottom:15px; font-weight:600; color:#475569; font-size:0.9rem;">Vulnerabilidade Social (VS)</div>
+                        <div style="margin-top:10px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:600px; margin-left:auto; margin-right:auto;">
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIVS(ivsCampus)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Campus</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIVS(ivsCampus)};">${(ivsCampus * 100).toFixed(1)}%</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIVS(ivsRegion)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${region === 'Global' ? 'Rede Média' : 'Região'}</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIVS(ivsRegion)};">${(ivsRegion * 100).toFixed(1)}%</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIVS(ivsNetwork)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Rede</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIVS(ivsNetwork)};">${(ivsNetwork * 100).toFixed(1)}%</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top:30px; margin-bottom:15px; font-weight:600; color:#475569; font-size:0.9rem;">Índice de Desenvolvimento Humano (IDH)</div>
+                        <div style="margin-top:10px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:600px; margin-left:auto; margin-right:auto;">
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIDH(idhCampus)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Campus</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIDH(idhCampus)};">${idhCampus.toFixed(3)}</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIDH(idhRegion)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${region === 'Global' ? 'Rede Média' : 'Região'}</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIDH(idhRegion)};">${idhRegion.toFixed(3)}</div>
+                            </div>
+                            <div style="padding:20px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorIDH(idhNetwork)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Rede</div>
+                                <div style="font-size:1.8rem; font-weight:700; color:${getCorIDH(idhNetwork)};">${idhNetwork.toFixed(3)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            else if(chartType === 'Perfil') {
+                document.getElementById('campus-chart-title').innerText = 'Perfil Multidimensional';
+                container.innerHTML = `
+                    <div style="padding:20px; text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:20px;">
+                            📊 Normalizacao 0-100 | 6 dimensoes: Investimento, Invest/hab, PIB, Eficiencia, Inclusao, Polo
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                            Nota: cada eixo vira uma pontuacao 0-100 por normalizacao min-max na rede. Ex.: Invest. Estimado = valor campus / maior valor da rede. Polo de Encontro inverte a distancia media (menor distancia = maior pontuacao). O score do card e a media simples das seis pontuacoes.
+                        </div>
+                        <div style="height:450px; display:flex; align-items:center; justify-content:center;">
+                            <canvas id="radarChart-main"></canvas>
+                        </div>
+                    </div>
+                `;
+                // Render radar chart here (reuse existing logic)
+                updateRadarChart('radarChart-main');
+            }
+            
+            else if(chartType === 'Investimento') {
+                console.log('Renderizando gráfico Investimento');
+                document.getElementById('campus-chart-title').innerText = 'Investimento Estimado em Bolsas';
+                const inv = calcGlobalInv(c);
+                console.log('Investimento calculado:', inv);
+                
+                // Cálculo de investimento por região e rede
+                const region = getRegionForCampus(currentCampusCode);
+                console.log('Região:', region);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                console.log('Códigos da região:', regionCodes);
+                
+                const regionInvTotal = regionCodes.reduce((sum, k) => {
+                    const invReg = calcGlobalInv(execData[k]);
+                    return sum + invReg.total;
+                }, 0);
+                const regionInvAvg = regionCodes.length ? regionInvTotal / regionCodes.length : 0;
+                const regionSupTotal = regionCodes.reduce((sum, k) => {
+                    const invReg = calcGlobalInv(execData[k]);
+                    return sum + invReg.sup;
+                }, 0);
+                const regionTecTotal = regionCodes.reduce((sum, k) => {
+                    const invReg = calcGlobalInv(execData[k]);
+                    return sum + invReg.tec;
+                }, 0);
+                const regionSupAvg = regionCodes.length ? regionSupTotal / regionCodes.length : 0;
+                const regionTecAvg = regionCodes.length ? regionTecTotal / regionCodes.length : 0;
+                
+                const networkInvTotal = Object.values(execData).reduce((sum, item) => {
+                    const invNet = calcGlobalInv(item);
+                    return sum + invNet.total;
+                }, 0);
+                const networkInvAvg = Object.keys(execData).length ? networkInvTotal / Object.keys(execData).length : 0;
+                const networkSupTotal = Object.values(execData).reduce((sum, item) => {
+                    const invNet = calcGlobalInv(item);
+                    return sum + invNet.sup;
+                }, 0);
+                const networkTecTotal = Object.values(execData).reduce((sum, item) => {
+                    const invNet = calcGlobalInv(item);
+                    return sum + invNet.tec;
+                }, 0);
+                const networkSupAvg = Object.keys(execData).length ? networkSupTotal / Object.keys(execData).length : 0;
+                const networkTecAvg = Object.keys(execData).length ? networkTecTotal / Object.keys(execData).length : 0;
+                
+                // Determina maior e menor valor para colorir
+                const values = [inv.total, regionInvAvg, networkInvAvg];
+                const maxValue = Math.max(...values);
+                const minValue = Math.min(...values);
+                
+                const getCor = (val) => {
+                    if (val === maxValue) return '#16a34a'; // verde
+                    if (val === minValue) return '#dc2626'; // vermelho
+                    return '#64748b'; // cinza padrão
+                };
+                
+                const getBordaCor = (val) => {
+                    if (val === maxValue) return '#16a34a';
+                    if (val === minValue) return '#dc2626';
+                    return '#64748b';
+                };
+                
+                try {
+                    console.log('Valores calculados:', { inv, regionInvAvg, networkInvAvg });
+                    container.innerHTML = `
+                        <div style="padding:30px 40px; text-align:center;">
+                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:25px;">
+                                📊 Dados: PROPESQ/IFPE (2024/2025) | Valores mensais × 12 meses
+                            </div>
+                            
+                            <!-- Cards de Detalhes -->
+                            <div style="margin-top:20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:700px; margin-left:auto; margin-right:auto;">
+                                <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(inv.total)};">
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Campus</div>
+                                    <div style="font-size:2rem; font-weight:800; color:${getCor(inv.total)}; margin-bottom:16px;">${inv.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                        <div><strong>Superior:</strong> ${inv.sup.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                        <div><strong>Técnico:</strong> ${inv.tec.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    </div>
+                                </div>
+                                <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(regionInvAvg)};">
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">${region === 'Global' ? 'Rede (Média)' : 'Região (Média)'}</div>
+                                    <div style="font-size:2rem; font-weight:800; color:${getCor(regionInvAvg)}; margin-bottom:16px;">${regionInvAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                        <div><strong>Superior:</strong> ${regionSupAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                        <div><strong>Técnico:</strong> ${regionTecAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    </div>
+                                </div>
+                                <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(networkInvAvg)};">
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Rede (Média)</div>
+                                    <div style="font-size:2rem; font-weight:800; color:${getCor(networkInvAvg)}; margin-bottom:16px;">${networkInvAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                        <div><strong>Superior:</strong> ${networkSupAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                        <div><strong>Técnico:</strong> ${networkTecAvg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Detalhes de Bolsas do Campus -->
+                            <div style="margin-top:30px; background:#f8fafc; border-radius:8px; padding:20px;">
+                                <div style="font-size:0.9rem; font-weight:700; color:var(--primary); margin-bottom:12px;">Distribuição de Bolsas - Campus</div>
+                                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; font-size:0.8rem; color:#64748b;">
+                                    <div style="padding:12px; background:#fff; border-radius:6px; border:1px solid #e2e8f0;">
+                                        <div style="font-weight:700; font-size:1.3rem; color:var(--primary);">${inv.cntCNPq}</div>
+                                        <div>Bolsas CNPq</div>
+                                    </div>
+                                    <div style="padding:12px; background:#fff; border-radius:6px; border:1px solid #e2e8f0;">
+                                        <div style="font-weight:700; font-size:1.3rem; color:var(--primary);">${inv.cntIFPESup}</div>
+                                        <div>IFPE Superior</div>
+                                    </div>
+                                    <div style="padding:12px; background:#fff; border-radius:6px; border:1px solid #e2e8f0;">
+                                        <div style="font-weight:700; font-size:1.3rem; color:var(--primary);">${inv.cntTecRes}</div>
+                                        <div>Bolsas Técnicas</div>
+                                    </div>
+                                    <div style="padding:12px; background:#fff; border-radius:6px; border:1px solid #e2e8f0;">
+                                        <div style="font-weight:700; font-size:1.3rem; color:var(--primary);">${inv.cntCNPq + inv.cntIFPESup + inv.cntTecRes}</div>
+                                        <div>Total</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="color:var(--text-muted); font-size:0.75rem; margin-top:24px; opacity:0.7;">
+                                Base: CNPq R$800 | IFPE Superior R$700 | Técnico R$300 | Anualizado (×12 meses)
+                            </div>
+                        </div>
+                    `;
+                    
+                    console.log('Gráfico Investimento renderizado com sucesso');
+                } catch(err) {
+                    console.error('Erro ao renderizar gráfico Investimento:', err);
+                    container.innerHTML = `<div style="padding:20px; color:red;">Erro: ${err.message}</div>`;
+                }
+            }
+            
+            else if(chartType === 'Eficiencia') {
+                document.getElementById('campus-chart-title').innerText = 'Eficiência Territorial: Densidade de Estudantes';
+                
+                // Cálculo de Eficiência Territorial (estudantes/100k hab)
+                const effCampus = c.pop > 0 ? ((c.stud / c.pop) * 100) : 0;
+                
+                // Região
+                const region = getRegionForCampus(currentCampusCode);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                
+                const effRegiaoArr = regionCodes.map(k => {
+                    const it = execData[k];
+                    return it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+                });
+                const effRegiao = effRegiaoArr.length ? (effRegiaoArr.reduce((a,b) => a+b) / effRegiaoArr.length) : 0;
+                
+                // Total de estudantes e população da região
+                let regionStudTotal = 0;
+                let regionPopTotal = 0;
+                regionCodes.forEach(k => {
+                    const it = execData[k];
+                    regionStudTotal += it.stud || 0;
+                    regionPopTotal += it.pop || 0;
+                });
+                
+                // Rede
+                const effRedeArr = Object.values(execData).map(it => {
+                    return it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+                });
+                const effRede = effRedeArr.length ? (effRedeArr.reduce((a,b) => a+b) / effRedeArr.length) : 0;
+                
+                // Total de estudantes e população da rede
+                let networkStudTotal = 0;
+                let networkPopTotal = 0;
+                Object.values(execData).forEach(it => {
+                    networkStudTotal += it.stud || 0;
+                    networkPopTotal += it.pop || 0;
+                });
+                
+                // Determina maior e menor valor para colorir
+                const effValues = [effCampus, effRegiao, effRede];
+                const maxEff = Math.max(...effValues);
+                const minEff = Math.min(...effValues);
+                
+                const getCorEff = (val) => {
+                    if (val === maxEff) return '#16a34a'; // verde (melhor eficiência)
+                    if (val === minEff) return '#dc2626'; // vermelho (pior eficiência)
+                    return '#64748b'; // cinza (meio)
+                };
+                
+                const getBordaCorEff = (val) => {
+                    if (val === maxEff) return '#16a34a';
+                    if (val === minEff) return '#dc2626';
+                    return '#64748b';
+                };
+                
+                container.innerHTML = `
+                    <div style="padding:30px 40px; text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:25px;">
+                            📊 Dados: PROPESQ/IFPE (2024/2025) + IBGE Cidades (2022) | Total de estudantes em IC&T ÷ população × 100k
+                        </div>
+                        
+                        <!-- Cards de Detalhes -->
+                        <div style="margin-top:20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:700px; margin-left:auto; margin-right:auto; margin-bottom:30px;">
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorEff(effCampus)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Campus</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCorEff(effCampus)}; margin-bottom:16px;">${effCampus.toFixed(1)}<span style="font-size:0.9rem; color:#64748b;">/100k hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Estudantes:</strong> ${c.stud}</div>
+                                    <div><strong>População:</strong> ${(c.pop*1000).toLocaleString('pt-BR')} hab</div>
+                                </div>
+                            </div>
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorEff(effRegiao)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">${region === 'Global' ? 'Rede Média' : 'Região'}</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCorEff(effRegiao)}; margin-bottom:16px;">${effRegiao.toFixed(1)}<span style="font-size:0.9rem; color:#64748b;">/100k hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Estudantes:</strong> ${regionStudTotal.toLocaleString('pt-BR')}</div>
+                                    <div><strong>População:</strong> ${(regionPopTotal*1000).toLocaleString('pt-BR')} hab</div>
+                                    <div style="margin-top:8px; padding-top:8px; border-top:1px solid #d4d4d8; font-weight:600; color:#2563eb;">
+                                        ${effRegiao > 0 ? (Math.abs(effRegiao - effCampus) < 0.1 ? 'Sem diferença' : (effRegiao > effCampus ? ((effRegiao / effCampus - 1) * 100).toFixed(0) + '% maior que o Campus' : ((1 - effRegiao / effCampus) * 100).toFixed(0) + '% menor que o Campus')) : '—'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCorEff(effRede)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Rede</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCorEff(effRede)}; margin-bottom:16px;">${effRede.toFixed(1)}<span style="font-size:0.9rem; color:#64748b;">/100k hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Estudantes:</strong> ${networkStudTotal.toLocaleString('pt-BR')}</div>
+                                    <div><strong>População:</strong> ${(networkPopTotal*1000).toLocaleString('pt-BR')} hab</div>
+                                    <div style="margin-top:8px; padding-top:8px; border-top:1px solid #d4d4d8; font-weight:600; color:#8b5cf6;">
+                                        ${effRede > 0 ? (Math.abs(effRede - effCampus) < 0.1 ? 'Sem diferença' : (effRede > effCampus ? ((effRede / effCampus - 1) * 100).toFixed(0) + '% maior que o Campus' : ((1 - effRede / effCampus) * 100).toFixed(0) + '% menor que o Campus')) : '—'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráfico de Contexto (bubble) abaixo - centralizado -->
+                    <div style="max-width:1200px; margin:0 auto; padding:0 30px;">
+                        <div style="padding:30px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                            <div style="font-size:0.9rem; font-weight:600; color:#475569; margin-bottom:15px; text-align:left;">Contexto: Todos os Campi (Bubble Chart)</div>
+                            <div style="height:400px; width:100%;"><canvas id="effCompareChart"></canvas></div>
+                            <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; font-size:0.75rem; color:var(--text-muted); text-align:left;">
+                                <div>● Campus (vermelho)</div>
+                                <div>● Regiao (laranja)</div>
+                                <div>● Rede (roxo)</div>
+                                <div>— Linhas: medias da rede (IDH e eficiencia)</div>
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:10px; text-align:left;">
+                                💡 Tamanho da bolha = população | Horizontal = IDH | Vertical = eficiencia
+                            </div>
+                            <div style="margin-top:12px; font-size:0.75rem; color:#475569; text-align:left; line-height:1.5;">
+                                <strong>Notas:</strong> Bolhas acima da linha horizontal estao acima da media da rede em eficiencia. Bolhas a direita da linha vertical estao acima da media em IDH.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Renderiza gráfico de contexto (DEPOIS do container ser definido)
+                setTimeout(() => {
+                    const effCompareContainer = document.getElementById('effCompareChart');
+                    if(effCompareContainer) {
+                        if(charts.effCompare) charts.effCompare.destroy();
+
+                        const entries = Object.entries(execData).map(([code, it]) => {
+                            const eff = it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+                            return {
+                                code,
+                                x: it.idh * 100,
+                                y: eff,
+                                r: Math.sqrt(it.pop) * 0.4,
+                                name: it.name
+                            };
+                        });
+                        const regionSet = new Set(regionCodes);
+                        const campusPoint = entries.find(p => p.code === currentCampusCode);
+                        const regionPoints = entries.filter(p => regionSet.has(p.code) && p.code !== currentCampusCode);
+                        const otherPoints = entries.filter(p => !regionSet.has(p.code));
+                        const idhVals = entries.map(p => p.x);
+                        const effVals = entries.map(p => p.y);
+                        const minIdh = Math.min(...idhVals, 55);
+                        const maxIdh = Math.max(...idhVals, 80);
+                        const maxEffLine = Math.max(...effVals, 1) * 1.05;
+                        const avgIdh = Object.values(execData).reduce((sum, it) => sum + (it.idh || 0), 0) / Object.keys(execData).length * 100;
+                        const avgEff = effRede;
+
+                        charts.effCompare = new Chart(effCompareContainer, {
+                            type: 'bubble',
+                            data: {
+                                datasets: [
+                                    {
+                                        label: 'Rede',
+                                        data: otherPoints,
+                                        backgroundColor: 'rgba(139, 92, 246, 0.35)',
+                                        borderColor: '#8b5cf6',
+                                        borderWidth: 1.5
+                                    },
+                                    {
+                                        label: 'Regiao',
+                                        data: regionPoints,
+                                        backgroundColor: 'rgba(245, 158, 11, 0.45)',
+                                        borderColor: '#f59e0b',
+                                        borderWidth: 1.8
+                                    },
+                                    {
+                                        label: 'Campus',
+                                        data: campusPoint ? [campusPoint] : [],
+                                        backgroundColor: '#dc2626',
+                                        borderColor: '#dc2626',
+                                        borderWidth: 2.2
+                                    },
+                                    {
+                                        type: 'line',
+                                        label: 'Media IDH',
+                                        data: [{ x: avgIdh, y: 0 }, { x: avgIdh, y: maxEffLine }],
+                                        borderColor: 'rgba(100, 116, 139, 0.6)',
+                                        borderDash: [6, 6],
+                                        pointRadius: 0,
+                                        fill: false
+                                    },
+                                    {
+                                        type: 'line',
+                                        label: 'Media eficiencia',
+                                        data: [{ x: minIdh, y: avgEff }, { x: maxIdh, y: avgEff }],
+                                        borderColor: 'rgba(100, 116, 139, 0.6)',
+                                        borderDash: [6, 6],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (ctx) => {
+                                                const idh = (ctx.parsed.x / 100).toFixed(3);
+                                                const eff = ctx.parsed.y.toFixed(1);
+                                                const deltaEff = ctx.parsed.y - avgEff;
+                                                const deltaIdh = ctx.parsed.x - avgIdh;
+                                                const effTag = deltaEff >= 0 ? `+${deltaEff.toFixed(1)}` : deltaEff.toFixed(1);
+                                                const idhTag = deltaIdh >= 0 ? `+${deltaIdh.toFixed(1)}` : deltaIdh.toFixed(1);
+                                                return `${ctx.raw.name}: ${eff} estud/100k hab | IDH ${idh} | vs media: ${effTag} ef / ${idhTag} IDH`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        title: { display: true, text: 'IDH Municipal (%) →', font: { size: 11 } },
+                                        min: 55,
+                                        max: 80
+                                    },
+                                    y: {
+                                        title: { display: true, text: 'Eficiência (estudantes/100k hab) ↑', font: { size: 11 } },
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }, 50);
+            }
+            
+            else if(chartType === 'Retorno') {
+                document.getElementById('campus-chart-title').innerText = 'Investimento per Capita';
+                
+                // Cálculo de investimento per capita
+                const inv = calcGlobalInv(c);
+                const invPerCapCampus = c.pop > 0 ? (inv.total / (c.pop * 1000)) : 0;
+                
+                // Região
+                const region = getRegionForCampus(currentCampusCode);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                
+                // Calcular Total de Investimento e População da Região
+                let regionInvTotal = 0;
+                let regionPopTotal = 0;
+                regionCodes.forEach(k => {
+                    const it = execData[k];
+                    const invReg = calcGlobalInv(it);
+                    regionInvTotal += invReg.total;
+                    regionPopTotal += it.pop;
+                });
+                const regionInvPerCap = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                    const it = execData[k];
+                    const invReg = calcGlobalInv(it);
+                    return sum + (it.pop > 0 ? invReg.total / (it.pop * 1000) : 0);
+                }, 0) / regionCodes.length : 0;
+                
+                // Rede
+                let networkInvTotal = 0;
+                let networkPopTotal = 0;
+                Object.keys(execData).forEach(k => {
+                    const it = execData[k];
+                    const invNet = calcGlobalInv(it);
+                    networkInvTotal += invNet.total;
+                    networkPopTotal += it.pop;
+                });
+                const networkInvPerCap = Object.keys(execData).length ? Object.keys(execData).reduce((sum, k) => {
+                    const it = execData[k];
+                    const invNet = calcGlobalInv(it);
+                    return sum + (it.pop > 0 ? invNet.total / (it.pop * 1000) : 0);
+                }, 0) / Object.keys(execData).length : 0;
+                
+                // Determina maior e menor valor para colorir
+                const values = [invPerCapCampus, regionInvPerCap, networkInvPerCap];
+                const maxValue = Math.max(...values);
+                const minValue = Math.min(...values);
+                
+                const getCor = (val) => {
+                    if (val === maxValue) return '#16a34a'; // verde
+                    if (val === minValue) return '#dc2626'; // vermelho
+                    return '#64748b'; // cinza padrão
+                };
+                
+                const getBordaCor = (val) => {
+                    if (val === maxValue) return '#16a34a';
+                    if (val === minValue) return '#dc2626';
+                    return '#64748b';
+                };
+                
+                container.innerHTML = `
+                    <div style="padding:30px 40px; text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:25px;">
+                            📊 Dados: PROPESQ/IFPE (2024/2025) + IBGE Cidades (2022) | Investimento total ÷ população
+                        </div>
+                        
+                        <!-- Cards de Detalhes -->
+                        <div style="margin-top:20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width:700px; margin-left:auto; margin-right:auto;">
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(invPerCapCampus)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Campus</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCor(invPerCapCampus)}; margin-bottom:16px;">R$ ${invPerCapCampus.toFixed(2)}<span style="font-size:0.9rem; color:#64748b;">/hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Investimento:</strong> ${inv.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div><strong>População:</strong> ${(c.pop*1000).toLocaleString('pt-BR')} hab</div>
+                                </div>
+                            </div>
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(regionInvPerCap)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">${region === 'Global' ? 'Rede Média' : 'Região'}</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCor(regionInvPerCap)}; margin-bottom:16px;">R$ ${regionInvPerCap.toFixed(2)}<span style="font-size:0.9rem; color:#64748b;">/hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Investimento:</strong> ${regionInvTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div><strong>População:</strong> ${(regionPopTotal*1000).toLocaleString('pt-BR')} hab</div>
+                                    <div style="margin-top:8px; padding-top:8px; border-top:1px solid #d4d4d8; font-weight:600; color:#2563eb;">
+                                        ${regionInvPerCap > 0 ? (Math.abs(regionInvPerCap - invPerCapCampus) < 0.01 ? 'Sem diferença' : (regionInvPerCap > invPerCapCampus ? ((regionInvPerCap / invPerCapCampus - 1) * 100).toFixed(0) + '% maior que o Campus' : ((1 - regionInvPerCap / invPerCapCampus) * 100).toFixed(0) + '% menor que o Campus')) : '—'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding:24px; background:#f8fafc; border-radius:8px; border:2px solid ${getBordaCor(networkInvPerCap)};">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase;">Rede</div>
+                                <div style="font-size:2rem; font-weight:800; color:${getCor(networkInvPerCap)}; margin-bottom:16px;">R$ ${networkInvPerCap.toFixed(2)}<span style="font-size:0.9rem; color:#64748b;">/hab</span></div>
+                                <div style="font-size:0.75rem; color:#666; line-height:1.6;">
+                                    <div><strong>Investimento:</strong> ${networkInvTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</div>
+                                    <div><strong>População:</strong> ${(networkPopTotal*1000).toLocaleString('pt-BR')} hab</div>
+                                    <div style="margin-top:8px; padding-top:8px; border-top:1px solid #d4d4d8; font-weight:600; color:#8b5cf6;">
+                                        ${networkInvPerCap > 0 ? (Math.abs(networkInvPerCap - invPerCapCampus) < 0.01 ? 'Sem diferença' : (networkInvPerCap > invPerCapCampus ? ((networkInvPerCap / invPerCapCampus - 1) * 100).toFixed(0) + '% maior que o Campus' : ((1 - networkInvPerCap / invPerCapCampus) * 100).toFixed(0) + '% menor que o Campus')) : '—'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="max-width:1200px; margin:0 auto; padding:0 30px;">
+                        <div style="padding:30px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                            <div style="font-size:0.9rem; font-weight:600; color:#475569; margin-bottom:15px; text-align:left;">Contexto: Investimento x Populacao (Bubble Chart)</div>
+                            <div style="height:400px; width:100%;"><canvas id="invPerCapBubble"></canvas></div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:12px; text-align:left;">
+                                💡 Tamanho da bolha = investimento per capita | Horizontal = populacao (mil) | Vertical = investimento total
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const bubbleCanvas = document.getElementById('invPerCapBubble');
+                    if(bubbleCanvas) {
+                        if(charts.invPerCapBubble) charts.invPerCapBubble.destroy();
+
+                        const bubbleData = Object.values(execData).map(it => {
+                            const invIt = calcGlobalInv(it);
+                            const popMil = it.pop || 0;
+                            const invPerCap = it.pop > 0 ? (invIt.total / (it.pop * 1000)) : 0;
+                            return {
+                                x: popMil,
+                                y: invIt.total,
+                                r: Math.max(4, Math.sqrt(invPerCap) * 12),
+                                name: it.name,
+                                invPerCap
+                            };
+                        });
+
+                        const campusPoint = bubbleData.find(p => p.name === c.name);
+                        const otherPoints = bubbleData.filter(p => p.name !== c.name);
+
+                        charts.invPerCapBubble = new Chart(bubbleCanvas, {
+                            type: 'bubble',
+                            data: {
+                                datasets: [
+                                    {
+                                        label: 'Rede IFPE',
+                                        data: otherPoints,
+                                        backgroundColor: 'rgba(37, 99, 235, 0.45)',
+                                        borderColor: '#2563eb',
+                                        borderWidth: 1.5
+                                    },
+                                    {
+                                        label: 'Campus',
+                                        data: campusPoint ? [campusPoint] : [],
+                                        backgroundColor: '#dc2626',
+                                        borderColor: '#dc2626',
+                                        borderWidth: 2
+                                    }
+                                ]
+                            },
+                            options: {
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (ctx) => {
+                                                const invTotal = ctx.parsed.y.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+                                                const pop = `${ctx.parsed.x.toLocaleString('pt-BR')} mil`;
+                                                const ipc = ctx.raw.invPerCap.toFixed(2);
+                                                return `${ctx.raw.name}: ${invTotal} | Pop ${pop} | R$ ${ipc}/hab`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        title: { display: true, text: 'Populacao (mil) →', font: { size: 11 } },
+                                        beginAtZero: true
+                                    },
+                                    y: {
+                                        title: { display: true, text: 'Investimento total (R$) ↑', font: { size: 11 } },
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }, 50);
+            }
+            
+            else if(chartType === 'Inclusao') {
+                document.getElementById('campus-chart-title').innerText = 'Inclusão Técnica: Juventude × IDH';
+                container.innerHTML = `
+                    <div style="padding:20px;">
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">
+                            📊 Fonte: PROPESQ/IFPE + IBGE Censo 2022 + IPEA Atlas 2021 | Tamanho = bolsas técnicas
+                        </div>
+                        <div style="height:400px;"><canvas id="incChart-main"></canvas></div>
+                        <div class="mini-kpi" style="margin-top:15px;">
+                            <div class="mini-kpi-item"><div class="value" id="inc-c-main">-</div><div class="label">Campus</div></div>
+                            <div class="mini-kpi-item"><div class="value" id="inc-r-main" style="color:#8b5cf6;">-</div><div class="label">Região</div></div>
+                            <div class="mini-kpi-item"><div class="value" id="inc-n-main" style="color:#64748b;">-</div><div class="label">Rede</div></div>
+                        </div>
+                    </div>
+                `;
+                updateIncChart('incChart-main', 'inc-c-main', 'inc-r-main', 'inc-n-main');
+            }
+            
+            else if(chartType === 'Mapa') {
+                document.getElementById('campus-chart-title').innerText = 'Polo de Encontro: menor distancia media dos estudantes';
+                container.innerHTML = `
+                    <div style="padding:20px;">
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">
+                            📊 Heuristica: polo com menor distancia media (ponderada por estudantes em IC&T)
+                        </div>
+                        <div style="height:420px;"><canvas id="mapChart-main"></canvas></div>
+                        <div class="mini-kpi" style="margin-top:15px;">
+                            <div class="mini-kpi-item"><div class="value" id="map-c-main">-</div><div class="label">Campus (media km)</div></div>
+                            <div class="mini-kpi-item"><div class="value" id="map-r-main" style="color:#8b5cf6;">-</div><div class="label">Regiao (media)</div></div>
+                            <div class="mini-kpi-item"><div class="value" id="map-n-main" style="color:#64748b;">-</div><div class="label">Rede (media)</div></div>
+                        </div>
+                    </div>
+                `;
+                updateMapChart('mapChart-main', 'map-c-main', 'map-r-main', 'map-n-main');
+            }
+
+            else if(chartType === 'Insights') {
+                document.getElementById('campus-chart-title').innerText = 'Próximos insights: Comparador de componentes';
+                const region = getRegionForCampus(currentCampusCode);
+                const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+                const maxProj = Math.max(...Object.values(execData).map(x => x.proj));
+                const maxInvPerCap = getMaxInvPerCap();
+                const allCodes = Object.keys(execData);
+                const maxStud = Math.max(...Object.values(execData).map(x => x.stud || 0));
+                const distanceByCode = allCodes.reduce((acc, code) => {
+                    acc[code] = computeWeightedAvgDistance(code, allCodes);
+                    return acc;
+                }, {});
+                const distValues = Object.values(distanceByCode).filter(v => Number.isFinite(v));
+                const maxDist = distValues.length ? Math.max(...distValues) : 0;
+                const minDist = distValues.length ? Math.min(...distValues) : 0;
+                const distScore = (dist) => {
+                    if (!Number.isFinite(dist)) return 0;
+                    if (maxDist === minDist) return 0;
+                    return ((maxDist - dist) / (maxDist - minDist)) * 100;
+                };
+                const campusMetrics = calcRadarMetrics(c, maxProj, maxInvPerCap);
+                const regionMetrics = getAggregateMetrics(regionCodes, maxProj, maxInvPerCap);
+                const networkMetrics = getAggregateMetrics(Object.keys(execData), maxProj, maxInvPerCap);
+
+                const campusDist = distanceByCode[currentCampusCode];
+                const regionDist = regionCodes.length ? regionCodes.reduce((sum, code) => sum + (distanceByCode[code] || 0), 0) / regionCodes.length : 0;
+                const networkDist = allCodes.length ? allCodes.reduce((sum, code) => sum + (distanceByCode[code] || 0), 0) / allCodes.length : 0;
+
+                const regionStudAvg = regionCodes.length ? regionCodes.reduce((sum, code) => sum + (execData[code]?.stud || 0), 0) / regionCodes.length : 0;
+                const networkStudAvg = allCodes.length ? allCodes.reduce((sum, code) => sum + (execData[code]?.stud || 0), 0) / allCodes.length : 0;
+
+                const components = {
+                    volume: { label: 'Volume de Projetos', campus: campusMetrics.volume, region: regionMetrics.volume, network: networkMetrics.volume },
+                    idh: { label: 'IDH Normalizado', campus: campusMetrics.idh, region: regionMetrics.idh, network: networkMetrics.idh },
+                    distance: { label: 'Distancia Media (menor melhor)', campus: distScore(campusDist), region: distScore(regionDist), network: distScore(networkDist) },
+                    students: { label: 'Alunos IC&T (escala)', campus: maxStud > 0 ? (c.stud / maxStud) * 100 : 0, region: maxStud > 0 ? (regionStudAvg / maxStud) * 100 : 0, network: maxStud > 0 ? (networkStudAvg / maxStud) * 100 : 0 },
+                    vuln: { label: 'Vulnerabilidade Social', campus: campusMetrics.vuln, region: regionMetrics.vuln, network: networkMetrics.vuln },
+                    tecShare: { label: '% Projetos Técnicos', campus: campusMetrics.tecShare, region: regionMetrics.tecShare, network: networkMetrics.tecShare },
+                    invest: { label: 'Investimento per Capita', campus: campusMetrics.invest, region: regionMetrics.invest, network: networkMetrics.invest }
+                };
+
+                const defaultKeys = ['distance', 'students', 'idh', 'invest'];
+
+                container.innerHTML = `
+                    <div style="padding:20px;">
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; text-align:center;">
+                            📊 Escolha os componentes para comparar Campus × ${region === 'Global' ? 'Rede' : 'Região'} × Rede (escala 0-100)
+                        </div>
+                        <div id="insights-component-list" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:14px;"></div>
+                        <div style="height:380px;"><canvas id="insightsChart"></canvas></div>
+                    </div>
+                `;
+
+                const listContainer = container.querySelector('#insights-component-list');
+                listContainer.innerHTML = Object.entries(components).map(([key, cfg]) => `
+                    <label style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; padding:6px 10px; border-radius:6px; font-size:0.8rem; color:#475569;">
+                        <input type="checkbox" name="insight-component" value="${key}" ${defaultKeys.includes(key) ? 'checked' : ''} />
+                        ${cfg.label}
+                    </label>
+                `).join('');
+
+                const renderInsights = () => {
+                    const selected = Array.from(container.querySelectorAll('input[name="insight-component"]:checked')).map(el => el.value);
+                    const activeKeys = selected.length ? selected : defaultKeys.slice(0, 1);
+                    const labels = activeKeys.map(k => components[k].label);
+                    const campusData = activeKeys.map(k => components[k].campus);
+                    const regionData = activeKeys.map(k => components[k].region);
+                    const networkData = activeKeys.map(k => components[k].network);
+                    const datasets = [
+                        { label: 'Campus', data: campusData, backgroundColor: pal.b }
+                    ];
+                    if(region !== 'Global') {
+                        datasets.push({ label: `Região ${region}`, data: regionData, backgroundColor: pal.o });
+                    }
+                    datasets.push({ label: 'Média Rede', data: networkData, backgroundColor: pal.g });
+
+                    if(activeCampusChart) activeCampusChart.destroy();
+                    activeCampusChart = new Chart(document.getElementById('insightsChart'), {
+                        type: 'bar',
+                        data: { labels, datasets },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: { y: { beginAtZero: true, suggestedMax: 100 } },
+                            plugins: {
+                                legend: { display: true, position: 'bottom' },
+                                tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} pts` } }
+                            }
+                        }
+                    });
+
+                    const insightVal = document.getElementById('card-rx-insights');
+                    if(insightVal) insightVal.innerText = `${activeKeys.length} comp.`;
+                };
+
+                container.querySelectorAll('input[name="insight-component"]').forEach(el => {
+                    el.addEventListener('change', renderInsights);
+                });
+                renderInsights();
+            }
+        }
+
+        // Helper functions to update individual charts
+        function updateRadarChart(canvasId) {
+            const region = Object.keys(regionsMap).find(r => regionsMap[r].includes(currentCampusCode)) || 'Global';
+            const regionCodes = region === 'Global' ? Object.keys(execData) : regionsMap[region];
+            const scale = getProfileScale();
+
+            const campusData = (calcProfileComponents(currentCampusCode, scale) || { scores: Array(6).fill(0) }).scores;
+            const regionData = getAverageProfileScores(regionCodes, scale);
+            const networkData = getAverageProfileScores(Object.keys(execData), scale);
+
+            const regionLabel = region === 'Global' ? 'Rede' : `${region}`;
+            const radarDatasets = [
+                { data: campusData, label: 'Campus', fill: true, backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: pal.b }
+            ];
+            if (region !== 'Global') {
+                radarDatasets.push({ data: regionData, label: regionLabel, fill: true, backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: pal.o });
+            }
+            radarDatasets.push({ data: networkData, label: 'Média Rede', fill: true, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: pal.g });
+
+            activeCampusChart = new Chart(document.getElementById(canvasId), {
+                type: 'radar',
+                data: {
+                    labels: ['Invest. Estimado', 'Invest. per Capita', 'PIB per Capita', 'Eficiência Territorial', 'Inclusão Técnica', 'Polo de Encontro'],
+                    datasets: radarDatasets
+                },
+                options: { plugins: { legend: { display: true, position: 'bottom' } }, scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { display: false } } } }
+            });
+        }
+        
+        function updateEffChart(canvasId, idC, idR, idN) {
+            const c = execData[currentCampusCode];
+            const region = Object.keys(regionsMap).find(r => regionsMap[r].includes(currentCampusCode)) || 'Global';
+            const regionCodes = region === 'Global' ? Object.keys(execData) : regionsMap[region];
+            
+            activeCampusChart = new Chart(document.getElementById(canvasId), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: Object.values(execData).map(it => {
+                            const eff = it.pop > 0 ? ((it.proj / it.pop) * 100) : 0;
+                            return {
+                                x: it.idh * 100,
+                                y: eff,
+                                r: Math.sqrt(it.pop) * 0.4,
+                                name: it.name,
+                                isCurrent: it.name === c.name
+                            };
+                        }),
+                        backgroundColor: (ctx) => ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(139, 92, 246, 0.6)',
+                        borderColor: (ctx) => ctx.raw && ctx.raw.isCurrent ? pal.r : pal.p,
+                        borderWidth: 2,
+                        pointRadius: (ctx) => ctx.raw && ctx.raw.isCurrent ? ctx.raw.r * 1.2 : ctx.raw.r
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw.name}: ${ctx.parsed.y.toFixed(1)} proj/100k hab | IDH ${(ctx.parsed.x/100).toFixed(3)}` } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'IDH Municipal (%) →', font: { size: 11 } }, min: 55, max: 80 },
+                        y: { title: { display: true, text: 'Eficiência (projetos/100k hab) ↑', font: { size: 11 } }, beginAtZero: true }
+                    }
+                }
+            });
+            
+            const effCampus = c.pop > 0 ? ((c.proj / c.pop) * 100).toFixed(1) : 0;
+            const effRegiao = regionCodes.length ? (regionCodes.reduce((sum, k) => {
+                const it = execData[k];
+                return sum + (it.pop > 0 ? ((it.proj / it.pop) * 100) : 0);
+            }, 0) / regionCodes.length).toFixed(1) : 0;
+            const effRede = (Object.values(execData).reduce((sum, it) => sum + (it.pop > 0 ? ((it.proj / it.pop) * 100) : 0), 0) / Object.keys(execData).length).toFixed(1);
+            
+            document.getElementById(idC).innerText = effCampus;
+            document.getElementById(idR).innerText = effRegiao;
+            document.getElementById(idN).innerText = effRede;
+        }
+        
+        function updateRetChart(canvasId, idC, idR, idN) {
+            const c = execData[currentCampusCode];
+            const region = Object.keys(regionsMap).find(r => regionsMap[r].includes(currentCampusCode)) || 'Global';
+            const regionCodes = region === 'Global' ? Object.keys(execData) : regionsMap[region];
+            
+            const retornoData = Object.values(execData).map(it => {
+                const inv = calcGlobalInv(it);
+                const invPerCap = it.pop > 0 ? (inv.total / (it.pop * 1000)) : 0;
+                return { x: it.pibPerCap, y: invPerCap, name: it.name, isCurrent: it.name === c.name };
+            });
+            
+            const n = retornoData.length;
+            const sumX = retornoData.reduce((acc, p) => acc + p.x, 0);
+            const sumY = retornoData.reduce((acc, p) => acc + p.y, 0);
+            const sumXY = retornoData.reduce((acc, p) => acc + (p.x * p.y), 0);
+            const sumX2 = retornoData.reduce((acc, p) => acc + (p.x * p.x), 0);
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            const minX = Math.min(...retornoData.map(p => p.x));
+            const maxX = Math.max(...retornoData.map(p => p.x));
+            const trendLine = [
+                { x: minX, y: slope * minX + intercept },
+                { x: maxX, y: slope * maxX + intercept }
+            ];
+            
+            activeCampusChart = new Chart(document.getElementById(canvasId), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: retornoData,
+                        backgroundColor: (ctx) => ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(37, 99, 235, 0.6)',
+                        pointRadius: (ctx) => ctx.raw && ctx.raw.isCurrent ? 10 : 6,
+                        pointHoverRadius: 8
+                    }, {
+                        label: 'Tendência',
+                        data: trendLine,
+                        type: 'line',
+                        borderColor: 'rgba(100, 116, 139, 0.5)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw.name}: R$ ${ctx.parsed.y.toFixed(2)}/hab (PIB R$ ${ctx.parsed.x}k)` } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'PIB per capita (R$ mil)', font: { size: 11 } }, beginAtZero: false },
+                        y: { title: { display: true, text: 'Investimento per capita (R$/hab)', font: { size: 11 } }, beginAtZero: true }
+                    }
+                }
+            });
+            
+            const inv = calcGlobalInv(c);
+            const invPerCapCampus = c.pop > 0 ? (inv.total / (c.pop * 1000)) : 0;
+            const regionInvPerCap = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                const it = execData[k];
+                const invIt = calcGlobalInv(it);
+                return sum + (it.pop > 0 ? invIt.total / (it.pop * 1000) : 0);
+            }, 0) / regionCodes.length : 0;
+            const networkInvPerCap = Object.keys(execData).reduce((sum, k) => {
+                const it = execData[k];
+                const invIt = calcGlobalInv(it);
+                return sum + (it.pop > 0 ? invIt.total / (it.pop * 1000) : 0);
+            }, 0) / Object.keys(execData).length;
+            
+            document.getElementById(idC).innerText = `R$ ${invPerCapCampus.toFixed(2)}`;
+            document.getElementById(idR).innerText = `R$ ${regionInvPerCap.toFixed(2)}`;
+            document.getElementById(idN).innerText = `R$ ${networkInvPerCap.toFixed(2)}`;
+        }
+        
+        function updateIncChart(canvasId, idC, idR, idN) {
+            const c = execData[currentCampusCode];
+            const region = Object.keys(regionsMap).find(r => regionsMap[r].includes(currentCampusCode)) || 'Global';
+            const regionCodes = region === 'Global' ? Object.keys(execData) : regionsMap[region];
+            
+            activeCampusChart = new Chart(document.getElementById(canvasId), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: Object.values(execData).map(it => ({
+                            x: it.idh * 100,
+                            y: it.popJovem,
+                            r: Math.sqrt(it.tech || 1) * 4,
+                            name: it.name,
+                            tech: it.tech,
+                            isCurrent: it.name === c.name
+                        })),
+                        backgroundColor: (ctx) => ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(245, 158, 11, 0.6)',
+                        borderColor: (ctx) => ctx.raw && ctx.raw.isCurrent ? pal.r : pal.o,
+                        borderWidth: 2,
+                        pointRadius: (ctx) => ctx.raw && ctx.raw.isCurrent ? ctx.raw.r * 1.2 : ctx.raw.r
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw.name}: ${ctx.raw.tech} bolsas téc | ${ctx.parsed.y.toFixed(1)}% jovens | IDH ${(ctx.parsed.x/100).toFixed(3)}` } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'IDH Municipal (%) →', font: { size: 11 } }, min: 55, max: 80 },
+                        y: { title: { display: true, text: '% População Jovem (15-29 anos) ↑', font: { size: 11 } }, min: 15, max: 26 }
+                    }
+                }
+            });
+            
+            const incRegiao = regionCodes.length ? (regionCodes.reduce((sum, k) => sum + (execData[k].popJovem || 0), 0) / regionCodes.length).toFixed(1) : 0;
+            const incRede = (Object.values(execData).reduce((sum, it) => sum + (it.popJovem || 0), 0) / Object.keys(execData).length).toFixed(1);
+            document.getElementById(idC).innerText = `${c.popJovem.toFixed(1)}%`;
+            document.getElementById(idR).innerText = `${incRegiao}%`;
+            document.getElementById(idN).innerText = `${incRede}%`;
+        }
+        
+        const distanceMatrix = {
+            'Recife': { 'Recife': 0, 'Pesqueira': 202, 'Barreiros': 91, 'Garanhuns': 200, 'Belo Jardim': 173, 'Ipojuca': 43, 'Cabo': 30, 'Caruaru': 122, 'Jaboatao': 16, 'Afogados': 306, 'Igarassu': 25, 'Palmares': 104, 'Olinda': 6, 'Abreu e Lima': 18, 'Paulista': 13, 'Vitoria': 46 },
+            'Pesqueira': { 'Recife': 202, 'Pesqueira': 0, 'Barreiros': 173, 'Garanhuns': 63, 'Belo Jardim': 30, 'Ipojuca': 180, 'Cabo': 183, 'Caruaru': 80, 'Jaboatao': 187, 'Afogados': 124, 'Igarassu': 205, 'Palmares': 127, 'Olinda': 206, 'Abreu e Lima': 204, 'Paulista': 206, 'Vitoria': 156 },
+            'Barreiros': { 'Recife': 91, 'Pesqueira': 173, 'Barreiros': 0, 'Garanhuns': 143, 'Belo Jardim': 146, 'Ipojuca': 48, 'Cabo': 61, 'Caruaru': 104, 'Jaboatao': 80, 'Afogados': 294, 'Igarassu': 114, 'Palmares': 46, 'Olinda': 97, 'Abreu e Lima': 107, 'Paulista': 104, 'Vitoria': 78 },
+            'Garanhuns': { 'Recife': 200, 'Pesqueira': 63, 'Barreiros': 143, 'Garanhuns': 0, 'Belo Jardim': 61, 'Ipojuca': 166, 'Cabo': 174, 'Caruaru': 88, 'Jaboatao': 184, 'Afogados': 178, 'Igarassu': 210, 'Palmares': 102, 'Olinda': 205, 'Abreu e Lima': 207, 'Paulista': 207, 'Vitoria': 157 },
+            'Belo Jardim': { 'Recife': 173, 'Pesqueira': 30, 'Barreiros': 146, 'Garanhuns': 61, 'Belo Jardim': 0, 'Ipojuca': 150, 'Cabo': 153, 'Caruaru': 51, 'Jaboatao': 157, 'Afogados': 149, 'Igarassu': 176, 'Palmares': 100, 'Olinda': 177, 'Abreu e Lima': 175, 'Paulista': 177, 'Vitoria': 127 },
+            'Ipojuca': { 'Recife': 43, 'Pesqueira': 180, 'Barreiros': 48, 'Garanhuns': 166, 'Belo Jardim': 150, 'Ipojuca': 0, 'Cabo': 13, 'Caruaru': 100, 'Jaboatao': 29, 'Afogados': 288, 'Igarassu': 68, 'Palmares': 63, 'Olinda': 50, 'Abreu e Lima': 59, 'Paulista': 56, 'Vitoria': 42 },
+            'Cabo': { 'Recife': 30, 'Pesqueira': 183, 'Barreiros': 61, 'Garanhuns': 174, 'Belo Jardim': 153, 'Ipojuca': 13, 'Cabo': 0, 'Caruaru': 103, 'Jaboatao': 19, 'Afogados': 291, 'Igarassu': 54, 'Palmares': 73, 'Olinda': 36, 'Abreu e Lima': 46, 'Paulista': 42, 'Vitoria': 34 },
+            'Caruaru': { 'Recife': 122, 'Pesqueira': 80, 'Barreiros': 104, 'Garanhuns': 88, 'Belo Jardim': 51, 'Ipojuca': 100, 'Cabo': 103, 'Caruaru': 0, 'Jaboatao': 105, 'Afogados': 189, 'Igarassu': 126, 'Palmares': 61, 'Olinda': 127, 'Abreu e Lima': 125, 'Paulista': 127, 'Vitoria': 76 },
+            'Jaboatao': { 'Recife': 16, 'Pesqueira': 187, 'Barreiros': 80, 'Garanhuns': 184, 'Belo Jardim': 157, 'Ipojuca': 29, 'Cabo': 19, 'Caruaru': 105, 'Jaboatao': 0, 'Afogados': 292, 'Igarassu': 33, 'Palmares': 90, 'Olinda': 21, 'Abreu e Lima': 30, 'Paulista': 25, 'Vitoria': 31 },
+            'Afogados': { 'Recife': 306, 'Pesqueira': 124, 'Barreiros': 294, 'Garanhuns': 178, 'Belo Jardim': 149, 'Ipojuca': 288, 'Cabo': 291, 'Caruaru': 189, 'Jaboatao': 292, 'Afogados': 0, 'Igarassu': 306, 'Palmares': 244, 'Olinda': 308, 'Abreu e Lima': 303, 'Paulista': 305, 'Vitoria': 259 },
+            'Igarassu': { 'Recife': 25, 'Pesqueira': 205, 'Barreiros': 114, 'Garanhuns': 210, 'Belo Jardim': 176, 'Ipojuca': 68, 'Cabo': 54, 'Caruaru': 126, 'Jaboatao': 33, 'Afogados': 306, 'Igarassu': 0, 'Palmares': 126, 'Olinda': 20, 'Abreu e Lima': 7, 'Paulista': 12, 'Vitoria': 53 },
+            'Palmares': { 'Recife': 104, 'Pesqueira': 127, 'Barreiros': 46, 'Garanhuns': 102, 'Belo Jardim': 100, 'Ipojuca': 63, 'Cabo': 73, 'Caruaru': 61, 'Jaboatao': 90, 'Afogados': 244, 'Igarassu': 126, 'Palmares': 0, 'Olinda': 110, 'Abreu e Lima': 114, 'Paulista': 112, 'Vitoria': 71 },
+            'Olinda': { 'Recife': 6, 'Pesqueira': 206, 'Barreiros': 97, 'Garanhuns': 205, 'Belo Jardim': 177, 'Ipojuca': 50, 'Cabo': 36, 'Caruaru': 127, 'Jaboatao': 21, 'Afogados': 308, 'Igarassu': 20, 'Palmares': 110, 'Olinda': 0, 'Abreu e Lima': 13, 'Paulista': 8, 'Vitoria': 51 },
+            'Abreu e Lima': { 'Recife': 18, 'Pesqueira': 204, 'Barreiros': 107, 'Garanhuns': 207, 'Belo Jardim': 175, 'Ipojuca': 59, 'Cabo': 46, 'Caruaru': 125, 'Jaboatao': 30, 'Afogados': 303, 'Igarassu': 7, 'Palmares': 114, 'Olinda': 13, 'Abreu e Lima': 0, 'Paulista': 5, 'Vitoria': 51 },
+            'Paulista': { 'Recife': 13, 'Pesqueira': 206, 'Barreiros': 104, 'Garanhuns': 207, 'Belo Jardim': 177, 'Ipojuca': 56, 'Cabo': 42, 'Caruaru': 127, 'Jaboatao': 25, 'Afogados': 305, 'Igarassu': 12, 'Palmares': 112, 'Olinda': 8, 'Abreu e Lima': 5, 'Paulista': 0, 'Vitoria': 51 },
+            'Vitoria': { 'Recife': 46, 'Pesqueira': 156, 'Barreiros': 78, 'Garanhuns': 157, 'Belo Jardim': 127, 'Ipojuca': 42, 'Cabo': 34, 'Caruaru': 76, 'Jaboatao': 31, 'Afogados': 259, 'Igarassu': 53, 'Palmares': 71, 'Olinda': 51, 'Abreu e Lima': 51, 'Paulista': 51, 'Vitoria': 0 }
+        };
+
+        const normalizeCityName = (name) => {
+            if (!name) return '';
+            return name
+                .replace(/ã/g, 'a').replace(/á/g, 'a').replace(/à/g, 'a')
+                .replace(/é/g, 'e').replace(/ê/g, 'e')
+                .replace(/í/g, 'i')
+                .replace(/ó/g, 'o').replace(/ô/g, 'o')
+                .replace(/ú/g, 'u')
+                .replace(/ç/g, 'c')
+                .replace(/ /g, ' ');
+        };
+
+        function getPairDistance(originName, destName) {
+            const originKey = normalizeCityName(originName).replace(/ /g, ' ');
+            const destKey = normalizeCityName(destName).replace(/ /g, ' ');
+            const row = distanceMatrix[originKey];
+            if (row && row[destKey] !== undefined) return row[destKey];
+            const revRow = distanceMatrix[destKey];
+            if (revRow && revRow[originKey] !== undefined) return revRow[originKey];
+            return null;
+        }
+
+        function computeMeetingPoint(codes) {
+            const list = codes.map(code => {
+                const it = execData[code];
+                return it ? { code, name: it.name, weight: it.stud || 0 } : null;
+            }).filter(Boolean);
+
+            if (!list.length) return { best: null, totalWeight: 0, list: [] };
+
+            const totalWeight = list.reduce((sum, it) => sum + (it.weight || 0), 0);
+
+            const averageDistanceTo = (candidateName) => {
+                if (totalWeight > 0) {
+                    const weighted = list.reduce((acc, it) => {
+                        const dist = getPairDistance(it.name, candidateName);
+                        if (dist === null) return acc;
+                        return { sum: acc.sum + dist * (it.weight || 0), weight: acc.weight + (it.weight || 0) };
+                    }, { sum: 0, weight: 0 });
+                    return weighted.weight > 0 ? weighted.sum / weighted.weight : 0;
+                }
+                const plain = list.reduce((acc, it) => {
+                    const dist = getPairDistance(it.name, candidateName);
+                    if (dist === null) return acc;
+                    return { sum: acc.sum + dist, count: acc.count + 1 };
+                }, { sum: 0, count: 0 });
+                return plain.count > 0 ? plain.sum / plain.count : 0;
+            };
+
+            const scored = list.map(it => ({
+                ...it,
+                avgDist: averageDistanceTo(it.name)
+            }));
+
+            const best = scored.reduce((bestSoFar, item) => {
+                if (!bestSoFar) return item;
+                if (item.avgDist < bestSoFar.avgDist) return item;
+                if (item.avgDist === bestSoFar.avgDist) {
+                    return (item.weight || 0) > (bestSoFar.weight || 0) ? item : bestSoFar;
+                }
+                return bestSoFar;
+            }, null);
+
+            return { best, totalWeight, list: scored };
+        }
+
+        function computeWeightedAvgDistance(candidateCode, codes) {
+            const candidate = execData[candidateCode];
+            if (!candidate) return 0;
+
+            const list = codes.map(code => execData[code]).filter(Boolean);
+            const totalWeight = list.reduce((sum, it) => sum + (it.stud || 0), 0);
+
+            if (totalWeight > 0) {
+                const weighted = list.reduce((acc, it) => {
+                    const dist = getPairDistance(it.name, candidate.name);
+                    if (dist === null) return acc;
+                    return { sum: acc.sum + dist * (it.stud || 0), weight: acc.weight + (it.stud || 0) };
+                }, { sum: 0, weight: 0 });
+                return weighted.weight > 0 ? weighted.sum / weighted.weight : 0;
+            }
+
+            const plain = list.reduce((acc, it) => {
+                const dist = getPairDistance(it.name, candidate.name);
+                if (dist === null) return acc;
+                return { sum: acc.sum + dist, count: acc.count + 1 };
+            }, { sum: 0, count: 0 });
+            return plain.count > 0 ? plain.sum / plain.count : 0;
+        }
+
+        function updateMapChart(canvasId, idC, idR, idN) {
+            const c = execData[currentCampusCode];
+            const region = Object.keys(regionsMap).find(r => regionsMap[r].includes(currentCampusCode)) || 'Global';
+            const regionCodes = region === 'Global' ? Object.keys(execData) : regionsMap[region];
+
+            const allCodes = Object.keys(execData);
+            const meeting = computeMeetingPoint(allCodes);
+            const best = meeting.best;
+            const optimalName = best ? best.name : '';
+
+            const entries = meeting.list.map(it => ({
+                code: it.code,
+                name: it.name,
+                avgDist: it.avgDist || 0,
+                weight: it.weight,
+                isBest: best && it.code === best.code,
+                isCurrent: it.code === currentCampusCode
+            })).sort((a, b) => a.avgDist - b.avgDist);
+
+            const barColors = entries.map(it => {
+                if (it.isBest) return '#16a34a';
+                if (it.isCurrent) return '#dc2626';
+                return 'rgba(37, 99, 235, 0.6)';
+            });
+
+            activeCampusChart = new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: entries.map(it => it.name),
+                    datasets: [{
+                        label: 'Distancia media ate o campus (km)',
+                        data: entries.map(it => it.avgDist),
+                        backgroundColor: barColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const row = entries[ctx.dataIndex];
+                                    return `${row.name}: ${row.avgDist.toFixed(0)} km (media) | ${row.weight} estudantes`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Distancia media ate o campus (km) →', font: { size: 11 } }, beginAtZero: true },
+                        y: { title: { display: true, text: 'Campus', font: { size: 11 } } }
+                    }
+                }
+            });
+
+            const campusEntry = entries.find(it => it.code === currentCampusCode);
+            const regionAvg = (() => {
+                const regionEntries = entries.filter(it => regionCodes.includes(it.code));
+                if (!regionEntries.length) return 0;
+                return regionEntries.reduce((s, it) => s + it.avgDist, 0) / regionEntries.length;
+            })();
+            const networkAvg = entries.length ? entries.reduce((s, it) => s + it.avgDist, 0) / entries.length : 0;
+
+            document.getElementById(idC).innerText = `${(campusEntry ? campusEntry.avgDist : 0).toFixed(0)} km`;
+            document.getElementById(idR).innerText = `${regionAvg.toFixed(0)} km`;
+            document.getElementById(idN).innerText = `${networkAvg.toFixed(0)} km`;
+        }
+
+        // --- SUBMISSÕES LOGIC ---
+        document.getElementById('sub-campus-select').addEventListener('change', (e) => updateSubView(e.target.value));
+
+        function updateSubView(campusName) {
+            const tit = getSubData(campusName, 'Titulação');
+            const totalDocs = tit['Doutorado'] || 0;
+            const totalMest = tit['Mestrado'] || 0;
+            const totalProp = totalDocs + totalMest + (tit['Especialização']||0);
+            const docPct = totalProp > 0 ? ((totalDocs/totalProp)*100).toFixed(0) : 0;
+            document.getElementById('card-tit-val').innerText = `${docPct}% Doutores`;
+            document.getElementById('card-tit-meta').innerText = `${totalDocs} Doutores / ${totalMest} Mestres`;
+
+            // MUDANÇA: Exibir Quantidade de Objetivos
+            const ods = getSubData(campusName, 'Objetivos de Desenvolvimento Sustentável');
+            const topOds = Object.entries(ods).sort((a,b)=>b[1]-a[1])[0];
+            const odsCount = Object.keys(ods).length; // Conta quantas chaves (objetivos) existem
+            
+            document.getElementById('card-ods-val').innerText = `${odsCount} Presentes`;
+            document.getElementById('card-ods-meta').innerText = topOds ? `Top: ${topOds[0].substring(0, 10)}... (${topOds[1]})` : '-';
+
+            const nat = getSubData(campusName, 'Projeto cadastrado é de pesquisa');
+            const app = nat['Aplicada'] || 0;
+            const bas = nat['Básica'] || 0;
+            const natTotal = app + bas;
+            const appPct = natTotal > 0 ? ((app/natTotal)*100).toFixed(0) : 0;
+            document.getElementById('card-nat-val').innerText = `${appPct}% Aplicada`;
+            document.getElementById('card-nat-meta').innerText = `${app} Aplicada / ${bas} Básica`;
+
+            const fom = getSubData(campusName, 'Projeto cadastrado possui apoio financeiro de agência de fomento');
+            const comFom = fom['Sim'] || 0;
+            const semFom = fom['Não'] || 0;
+            const fomTotal = comFom + semFom;
+            const fomPct = fomTotal > 0 ? ((comFom/fomTotal)*100).toFixed(0) : 0;
+            document.getElementById('card-fom-val').innerText = `${fomPct}% Com Apoio`;
+            document.getElementById('card-fom-meta').innerText = `${comFom} Com Apoio / ${semFom} Sem Apoio`;
+
+            renderSubChart(currentSubMetric, null); 
+        }
+
+        function renderSubChart(metricKey, cardEl) {
+            if(cardEl) {
+                document.getElementById('view-submissoes').querySelectorAll('.interactive-card').forEach(c => c.classList.remove('selected'));
+                cardEl.classList.add('selected');
+                currentSubMetric = metricKey;
+            }
+
+            const campus = document.getElementById('sub-campus-select').value;
+            const rawData = getSubData(campus, metricKey);
+            
+            let entries = Object.entries(rawData);
+            entries.sort((a, b) => b[1] - a[1]);
+
+            const labels = entries.map(e => e[0]);
+            const values = entries.map(e => e[1]);
+
+            const ctx = document.getElementById('dynamicSubChart');
+            if (activeSubChart) activeSubChart.destroy();
+
+            // MUDANÇA PRINCIPAL: Todos os gráficos são 'bar', horizontais (indexAxis: 'y')
+            let chartType = 'bar';
+            let colors;
+            let title = '';
+
+            // Definindo cores baseadas no card selecionado para manter coerência visual
+            if (metricKey === 'Titulação') {
+                title = 'Perfil de Titulação dos Proponentes (Únicos)';
+                colors = pal.b; // Azul
+            } else if (metricKey === 'Objetivos de Desenvolvimento Sustentável') {
+                title = 'Top Objetivos de Desenvolvimento Sustentável (ODS)';
+                colors = pal.g; // Verde
+            } else if (metricKey === 'Projeto cadastrado é de pesquisa') {
+                title = 'Natureza da Pesquisa (Básica vs Aplicada)';
+                colors = pal.p; // Roxo
+            } else if (metricKey === 'Projeto cadastrado possui apoio financeiro de agência de fomento') {
+                title = 'Projetos com Apoio Financeiro Externo';
+                colors = pal.o; // Laranja
+            }
+
+            document.getElementById('sub-chart-title').innerText = `${title} - ${campus}`;
+
+            activeSubChart = new Chart(ctx, {
+                type: 'bar', // Força barra
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors, // Usa a cor definida acima
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Força horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false } // Esconde legenda
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { display: true }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false // Mostra todos os labels
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- EXECUÇÃO LOGIC (NEW DYNAMIC) ---
+        // Helper to calculate investment (reused)
+        const calcGlobalInv = (c) => {
+            const cntCNPq = (c.schol["Bolsa CNPq"]||0);
+            const cntIFPESup = Math.min(Math.max(0, c.pibic-cntCNPq), c.schol["Bolsa IFPE"]||0);
+            const cntSup = cntCNPq + cntIFPESup;
+            const cntTec = c.tech || 0; // Usa o campo 'tech' diretamente
+            let mSup = cntCNPq*800 + cntIFPESup*700;
+            let mTec = cntTec*300;
+            return { total: (mSup+mTec)*12, sup: mSup*12, tec: mTec*12, cntSupRes: cntSup, cntTecRes: cntTec, cntCNPq: cntCNPq, cntIFPESup: cntIFPESup };
+        };
+
+        // Function to filter data based on selection
+        function getFilteredExecData() {
+            const region = document.getElementById('exec-region-select').value;
+            const allItems = Object.entries(execData).map(([key, val]) => ({ ...val, code: key })); // Add code to obj
+            
+            if (region === 'Global') return allItems;
+            
+            // Filter based on the map
+            const targetCodes = regionsMap[region] || [];
+            return allItems.filter(item => targetCodes.includes(item.code));
+        }
+
+        function updateExecView() {
+            const list = getFilteredExecData();
+            
+            // Recalculate KPIs based on filtered list
+            const totalProj = list.reduce((s,c) => s+c.proj, 0);
+            
+            // Calcular total de bolsistas (superior + técnico)
+            const totalBolsistas = list.reduce((sum, c) => sum + (c.pibic || 0) + (c.tech || 0), 0);
+            
+            // Calcular total de voluntários (superior + técnico)
+            const totalVoluntarios = list.reduce((sum, c) => {
+                const volSup = c.volunteer && c.volunteer.sup ? c.volunteer.sup : 0;
+                const volTec = c.volunteer && c.volunteer.tech ? c.volunteer.tech : 0;
+                return sum + volSup + volTec;
+            }, 0);
+            
+            // Total de participações = bolsistas + voluntários
+            const totalParticipacoes = totalBolsistas + totalVoluntarios;
+            
+            // Avoid division by zero
+            const effAvg = list.length > 0 ? (list.reduce((s,c) => s + (c.proj/c.pop*100), 0) / list.length).toFixed(1) : 0;
+
+            let totalInv = 0;
+            list.forEach(c => totalInv += calcGlobalInv(c).total);
+            const totalInvFormatted = (totalInv/1000000).toFixed(1) + 'M';
+
+            // Calcular total de bolsistas em vulnerabilidade
+            const totalVulneravelBolsistas = list.reduce((sum, c) => {
+                const supSim = c.vulnerability?.sup?.sim || 0;
+                const tecSim = c.vulnerability?.tec?.sim || 0;
+                return sum + supSim + tecSim;
+            }, 0);
+
+            // Calcular investimento per capita médio
+            const totalPopForExec = list.reduce((s, c) => s + c.pop, 0);
+            const invPerCapExec = totalPopForExec > 0 ? (totalInv / (totalPopForExec * 1000)).toFixed(2) : 0;
+
+            // Populate Cards
+            document.getElementById('card-exec-proj').innerText = totalParticipacoes;
+            document.getElementById('card-exec-eff').innerText = effAvg;
+            document.getElementById('card-exec-inv').innerText = `R$ ${totalInvFormatted}`;
+            document.getElementById('card-exec-vuln').innerText = totalVulneravelBolsistas;
+            document.getElementById('card-exec-inv-percap').innerText = `R$ ${invPerCapExec}`;
+
+            // Re-render chart with current metric but filtered data
+            renderExecChart(currentExecMetric, null);
+        }
+
+        function renderExecChart(chartType, cardEl) {
+            if(cardEl) {
+                document.getElementById('view-execucao').querySelectorAll('.interactive-card').forEach(c => c.classList.remove('selected'));
+                cardEl.classList.add('selected');
+                currentExecMetric = chartType;
+            }
+
+            const ctx = document.getElementById('dynamicExecChart');
+            if (activeExecChart) activeExecChart.destroy();
+
+            // Use the filtered list!
+            const list = getFilteredExecData();
+            
+            const totalProj = list.reduce((s,c) => s+c.proj, 0);
+            document.getElementById('exec-legend').style.display = 'none'; // Hide Legend by default
+
+            // 1. PARETO (Volume) -> Agora "Participações: Bolsistas vs Voluntários"
+            if(chartType === 'Pareto') {
+                document.getElementById('exec-chart-title').innerText = 'Distribuição de Participações: Bolsistas e Voluntários por Campus';
+                // Ordenar pelo total de participações (bolsistas + voluntários)
+                const sorted = [...list].sort((a,b) => {
+                    const totalA = (a.pibic || 0) + (a.tech || 0) + ((a.volunteer?.sup || 0) + (a.volunteer?.tech || 0));
+                    const totalB = (b.pibic || 0) + (b.tech || 0) + ((b.volunteer?.sup || 0) + (b.volunteer?.tech || 0));
+                    return totalB - totalA;
+                });
+                
+                activeExecChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(c => c.name),
+                        datasets: [
+                            // Bolsistas - Superior
+                            { 
+                                label: 'Bolsistas - Superior', 
+                                data: sorted.map(c => c.pibic || 0), 
+                                backgroundColor: '#3b82f6', // Azul mais escuro
+                                stack: 'Bolsistas',
+                                order: 1
+                            },
+                            // Bolsistas - Técnico
+                            { 
+                                label: 'Bolsistas - Técnico', 
+                                data: sorted.map(c => c.tech || 0), 
+                                backgroundColor: '#60a5fa', // Azul mais claro
+                                stack: 'Bolsistas',
+                                order: 1
+                            },
+                            // Voluntários - Superior
+                            { 
+                                label: 'Voluntários - Superior', 
+                                data: sorted.map(c => c.volunteer?.sup || 0), 
+                                backgroundColor: '#10b981', // Verde escuro
+                                stack: 'Voluntarios',
+                                order: 2
+                            },
+                            // Voluntários - Técnico
+                            { 
+                                label: 'Voluntários - Técnico', 
+                                data: sorted.map(c => c.volunteer?.tech || 0), 
+                                backgroundColor: '#34d399', // Verde claro
+                                stack: 'Voluntarios',
+                                order: 2
+                            }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: { 
+                            y: { 
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Número de Participantes'
+                                }
+                            },
+                            x: { 
+                                grid: {display:false}, 
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Campus'
+                                }
+                            } 
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    footer: (tooltipItems) => {
+                                        let totalBolsistas = 0;
+                                        let totalVoluntarios = 0;
+                                        tooltipItems.forEach(item => {
+                                            if (item.dataset.stack === 'Bolsistas') {
+                                                totalBolsistas += item.parsed.y;
+                                            } else if (item.dataset.stack === 'Voluntarios') {
+                                                totalVoluntarios += item.parsed.y;
+                                            }
+                                        });
+                                        return `\nTotal Bolsistas: ${totalBolsistas}\nTotal Voluntários: ${totalVoluntarios}\nTotal: ${totalBolsistas + totalVoluntarios}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. EFICIÊNCIA (Capilaridade) - STACKED
+            else if(chartType === 'Eficiencia') {
+                document.getElementById('exec-chart-title').innerText = 'Ranking de Eficiência: Superior vs Técnico (Estudantes/100k Hab)';
+                const eff = [...list].sort((a,b) => ((b.pibic + b.tech)/b.pop) - ((a.pibic + a.tech)/a.pop));
+                
+                activeExecChart = new Chart(ctx, {
+                    type: 'bar', 
+                    indexAxis: 'y',
+                    data: { 
+                        labels: eff.map(c => c.name), 
+                        datasets: [
+                            { 
+                                label: 'Eficiência Nível Superior', 
+                                data: eff.map(c => ((c.pibic / c.pop) * 100).toFixed(1)), 
+                                backgroundColor: pal.g
+                            },
+                            { 
+                                label: 'Eficiência Nível Técnico', 
+                                data: eff.map(c => ((c.tech / c.pop) * 100).toFixed(1)), 
+                                backgroundColor: '#86efac'
+                            }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { display: true } }, // Show legend to explain splits
+                        scales: { 
+                            x: { }, 
+                            y: { } 
+                        }
+                    }
+                });
+            }
+
+            // 3. INVESTIMENTO (STACKED)
+            else if(chartType === 'Investimento') {
+                document.getElementById('exec-chart-title').innerText = 'Distribuição do Investimento: Superior vs Técnico';
+                const investList = list.map(c => {
+                    const inv = calcGlobalInv(c);
+                    return { name: c.name, ...inv };
+                }).sort((a,b) => b.total - a.total);
+
+                activeExecChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: investList.map(c => c.name),
+                        datasets: [
+                            { type: 'bar', label: 'Nível Superior (R$)', data: investList.map(c => c.sup), backgroundColor: pal.b },
+                            { type: 'bar', label: 'Nível Técnico (R$)', data: investList.map(c => c.tec), backgroundColor: '#38bdf8' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { grid: {display:false} }, y: {} },
+                        plugins: { tooltip: { callbacks: { label: function(context) { 
+                            return `${context.dataset.label}: R$ ${(context.raw/1000).toFixed(0)}k`; 
+                        }}}}
+                    }
+                });
+            }
+
+            // 4. SOCIAL (Vulnerabilidade) - Quantidade de Bolsistas Vulneráveis
+            else if(chartType === 'Social') {
+                document.getElementById('exec-chart-title').innerText = 'Quantidade de Bolsistas Vulneráveis';
+                
+                // Preparar dados: apenas bolsistas vulneráveis (SIM), ordenados por total
+                const vulnData = [...list].sort((a,b) => {
+                    const totalA = (a.vulnerability?.sup?.sim || 0) + (a.vulnerability?.tec?.sim || 0);
+                    const totalB = (b.vulnerability?.sup?.sim || 0) + (b.vulnerability?.tec?.sim || 0);
+                    return totalB - totalA;
+                });
+                
+                activeExecChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: vulnData.map(c => c.name),
+                        datasets: [
+                            // Bolsistas em vulnerabilidade (SIM) - Superior
+                            { 
+                                label: 'Superior', 
+                                data: vulnData.map(c => c.vulnerability?.sup?.sim || 0), 
+                                backgroundColor: '#dc2626', // Vermelho
+                                order: 1
+                            },
+                            // Bolsistas em vulnerabilidade (SIM) - Técnico
+                            { 
+                                label: 'Técnico', 
+                                data: vulnData.map(c => c.vulnerability?.tec?.sim || 0), 
+                                backgroundColor: '#f87171', // Vermelho claro
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: { 
+                            x: { grid: {display:false}, title: {display:true, text:'Campus'} },
+                            y: { 
+                                beginAtZero: true,
+                                title: {display:true, text:'Número de Bolsistas Vulneráveis'}
+                            } 
+                        },
+                        plugins: { 
+                            legend: { display: true, position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    footer: (tooltipItems) => {
+                                        let totalVuln = 0;
+                                        tooltipItems.forEach(item => {
+                                            totalVuln += item.parsed.y;
+                                        });
+                                        return `\nTotal de Vulneráveis: ${totalVuln}`;
+                                    }
+                                }
+                            }
+                        } 
+                    }
+                });
+            }
+
+            // 5. INVESTIMENTO PER CAPITA
+            else if(chartType === 'InvestimentoPerCapita') {
+                document.getElementById('exec-chart-title').innerText = 'Investimento per Capita: Superior vs Técnico';
+                const invPerCapList = list.map(c => {
+                    const inv = calcGlobalInv(c);
+                    const invPerCapSup = c.pop > 0 ? (inv.sup / (c.pop * 1000)) : 0;
+                    const invPerCapTec = c.pop > 0 ? (inv.tec / (c.pop * 1000)) : 0;
+                    return { name: c.name, sup: invPerCapSup, tec: invPerCapTec, total: invPerCapSup + invPerCapTec };
+                }).sort((a,b) => b.total - a.total);
+
+                activeExecChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: invPerCapList.map(c => c.name),
+                        datasets: [
+                            { type: 'bar', label: 'Nível Superior (R$/hab)', data: invPerCapList.map(c => c.sup), backgroundColor: pal.b },
+                            { type: 'bar', label: 'Nível Técnico (R$/hab)', data: invPerCapList.map(c => c.tec), backgroundColor: '#38bdf8' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { grid: {display:false} }, y: {} },
+                        plugins: { tooltip: { callbacks: { label: function(context) { 
+                            return `${context.dataset.label}: R$ ${context.raw.toFixed(2)}`; 
+                        }}}}
+                    }
+                });
+            }
+
+            // 6. MATRIZ (Option)
+            else if(chartType === 'Matriz') {
+                document.getElementById('exec-chart-title').innerText = 'Matriz Estratégica: Desempenho vs Contexto (IDH)';
+                document.getElementById('exec-legend').style.display = 'flex';
+                document.getElementById('exec-legend').innerHTML = `
+                    <div class="legend-item"><span class="dot dot-green"></span> Alta Prod | Baixo IDH</div>
+                    <div class="legend-item"><span class="dot dot-blue"></span> Alta Prod | Alto IDH</div>
+                    <div class="legend-item"><span class="dot dot-orange"></span> Baixa Prod | Baixo IDH</div>
+                    <div class="legend-item"><span class="dot dot-slate"></span> Baixa Prod | Alto IDH</div>
+                `;
+                
+                const avgProj = (totalProj / list.length);
+                activeExecChart = new Chart(ctx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: [{
+                            data: list.map(c => ({ x: c.idh, y: c.proj, r: Math.sqrt(c.pop)*0.6, raw: c })),
+                            backgroundColor: (ctx) => {
+                                const v = ctx.raw; if(!v)return;
+                                if(v.y>=avgProj && v.x<=0.68) return pal.g;
+                                if(v.y>=avgProj && v.x>0.68) return pal.b;
+                                if(v.y<avgProj && v.x<=0.68) return pal.o;
+                                return pal.r; 
+                            }
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw.raw.name}: ${c.raw.y} projs` } } },
+                        scales: { x: { title: {display:true, text:'IDH Municipal'} }, y: { title: {display:true, text:'Volume de Projetos'} } }
+                    }
+                });
+            }
+        }
+
+        // --- CAMPUS LOGIC ---
+        document.getElementById('campus-select').addEventListener('change', (e) => {
+            console.log('Campus selector alterado para:', e.target.value);
+            currentCampusCode = e.target.value;
+            updateCampus(e.target.value);
+        });
+
+        function updateCampus(code) {
+            console.log('====== INICIANDO updateCampus ======');
+            console.log('updateCampus chamado com código:', code);
+            currentCampusCode = code;
+            const c = execData[code];
+            console.log('Campus data:', c);
+            if(!c) {
+                console.error('Campus não encontrado no execData!', code);
+                return;
+            }
+            const region = getRegionForCampus(code);
+            const maxProj = 85; 
+            const maxInvPerCap = getMaxInvPerCap();
+            const regionCodes = region === 'Global' ? Object.keys(execData) : (regionsMap[region] || Object.keys(execData));
+
+            // IVS Local: usar o índice diretamente (quanto maior, maior inserção social atendida)
+            const socialScore = Math.round((c.vuln || 0) * 100);
+            
+            // Gauge Update - apenas se a aba Raio-X estiver ativa
+            const gaugeFill = document.getElementById('gauge-fill-chart');
+            if(gaugeFill) {
+                const deg = (socialScore / 100) * 180;
+                gaugeFill.style.transform = `rotate(${deg - 45}deg)`;
+                gaugeFill.style.borderTopColor = socialScore >= 70 ? pal.g : socialScore >= 40 ? pal.o : pal.r;
+            }
+            
+            const scoreVal = document.getElementById('score-val');
+            const scoreTxt = document.getElementById('score-txt');
+            if(scoreVal) scoreVal.innerText = socialScore;
+            if(scoreTxt) scoreTxt.innerText = socialScore >= 70 ? "Alta inserção (IVS elevado)" : socialScore >= 40 ? "Inserção moderada" : "Inserção baixa (reforçar alcance)";
+
+            const regionMetrics = getAggregateMetrics(regionCodes, maxProj, maxInvPerCap);
+            const networkMetrics = getAggregateMetrics(Object.keys(execData), maxProj, maxInvPerCap);
+            
+            const socialInsight = document.getElementById('social-insight');
+            if(socialInsight) {
+                socialInsight.innerHTML = `
+                    IVS local ${c.vuln.toFixed(2)} | Região ${ (regionMetrics.vuln/100).toFixed(2) } | Rede ${ (networkMetrics.vuln/100).toFixed(2) }<br>
+                    IDH local ${c.idh.toFixed(3)} | Região ${ (regionMetrics.idh/100).toFixed(3) } | Rede ${ (networkMetrics.idh/100).toFixed(3) }
+                `;
+            }
+
+            // Popula mini-KPIs de IVS
+            const ivsCampus = document.getElementById('ivs-campus-chart');
+            const ivsRegiao = document.getElementById('ivs-regiao-chart');
+            const ivsRede = document.getElementById('ivs-rede-chart');
+            
+            if(ivsCampus) ivsCampus.innerText = c.vuln.toFixed(2);
+            if(ivsRegiao) ivsRegiao.innerText = (regionMetrics.vuln/100).toFixed(2);
+            if(ivsRede) ivsRede.innerText = (networkMetrics.vuln/100).toFixed(2);
+
+            // Investment Calc
+            let moneySup = 0, moneyTec = 0;
+            if(c.schol["Bolsa CNPq"]) moneySup += c.schol["Bolsa CNPq"] * 800 * 12;
+            if(c.schol["Bolsa IFPE"]) {
+                const cnpq = c.schol["Bolsa CNPq"] || 0;
+                const ifpeTotal = c.schol["Bolsa IFPE"] || 0;
+                const supSemBolsaCnpq = Math.max(0, c.pibic - cnpq);
+                const ifpeParaSup = Math.min(supSemBolsaCnpq, ifpeTotal);
+                const ifpeParaTec = Math.max(0, ifpeTotal - ifpeParaSup);
+                moneySup += ifpeParaSup * 700 * 12;
+                moneyTec += ifpeParaTec * 300 * 12;
+            }
+            const totalMoney = moneySup + moneyTec;
+            
+            // Total global para percentual
+            const networkInvTotal = Object.values(execData).reduce((sum, item) => {
+                const invNet = calcGlobalInv(item);
+                return sum + invNet.total;
+            }, 0);
+            const regionInvTotal = regionCodes.reduce((sum, k) => {
+                const invReg = calcGlobalInv(execData[k]);
+                return sum + invReg.total;
+            }, 0);
+            const sharePct = totalMoney > 0 ? (totalMoney / networkInvTotal) * 100 : 0;
+            const shareRegionPct = totalMoney > 0 ? (totalMoney / regionInvTotal) * 100 : 0;
+            
+            // Proporções Superior vs Técnico
+            const supPct = totalMoney > 0 ? (moneySup / totalMoney * 100).toFixed(0) : 0;
+            const tecPct = totalMoney > 0 ? (moneyTec / totalMoney * 100).toFixed(0) : 0;
+
+            // Cálculo de investimento per capita para comparação (usando calcGlobalInv para consistência)
+            const invCampusCalc = calcGlobalInv(c);
+            const invPerCapCampus = c.pop > 0 ? (invCampusCalc.total / (c.pop * 1000)) : 0;
+            
+            // Região
+            const regionInvPerCap = regionCodes.length ? regionCodes.reduce((sum, k) => {
+                const it = execData[k];
+                const inv = calcGlobalInv(it);
+                return sum + (it.pop > 0 ? inv.total / (it.pop * 1000) : 0);
+            }, 0) / regionCodes.length : 0;
+            
+            // Rede
+            const allKeysInv = Object.keys(execData);
+            const networkInvPerCap = allKeysInv.length ? allKeysInv.reduce((sum, k) => {
+                const it = execData[k];
+                const inv = calcGlobalInv(it);
+                return sum + (it.pop > 0 ? inv.total / (it.pop * 1000) : 0);
+            }, 0) / allKeysInv.length : 0;
+
+            // RESTAURAÇÃO DO DETALHE COMPLETO NO CARD
+            const moneyContainer = document.getElementById('money-container');
+            if(moneyContainer) {
+                moneyContainer.innerHTML = `
+                    <div style="font-size:2.2rem; font-weight:800; letter-spacing:-1px; color:var(--primary);">
+                        ${totalMoney.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                    </div>
+                    <div style="font-size:0.9rem; color:${sharePct > 5 ? 'var(--success)' : 'var(--text-muted)'}; font-weight:600; margin-top:-2px;">
+                        ${sharePct.toFixed(1)}% da Rede ${region !== 'Global' ? `| ${shareRegionPct.toFixed(1)}% da ${region === 'RMR' ? 'RMR' : 'Região'}` : ''}
+                    </div>
+                    <div style="color:var(--text-muted); font-size:0.75rem; margin-top:12px; line-height:1.5; padding-top:8px; border-top:1px solid #f1f5f9;">
+                        <strong>Investimento per capita:</strong><br>
+                        Campus: R$ ${invPerCapCampus.toFixed(2)} | 
+                        ${region === 'Global' ? 'Rede' : `Região ${region}`}: R$ ${regionInvPerCap.toFixed(2)} | 
+                        Rede: R$ ${networkInvPerCap.toFixed(2)}
+                    </div>
+                    <div style="color:var(--text-muted); font-size:0.7rem; margin-top:8px; opacity:0.8;">
+                        Base: CNPq R$800 | IFPE Sup R$700 | Téc R$300
+                    </div>
+                `;
+            }
+            
+            // ATUALIZAÇÃO DAS LEGENDAS DE PROPORÇÃO
+            const lblSup = document.getElementById('lbl-sup');
+            const lblTec = document.getElementById('lbl-tec');
+            if(lblSup) lblSup.innerHTML = `<i class="fas fa-circle" style="font-size:6px; color:var(--primary)"></i> Superior <b>(${supPct}%)</b>`;
+            if(lblTec) lblTec.innerHTML = `<i class="fas fa-circle" style="font-size:6px; color:#38bdf8"></i> Técnico <b>(${tecPct}%)</b>`;
+            
+            const moneyBarSup = document.getElementById('money-bar-sup');
+            const moneyBarTec = document.getElementById('money-bar-tec');
+            if(moneyBarSup) moneyBarSup.style.width = `${supPct}%`;
+            if(moneyBarTec) moneyBarTec.style.width = `${tecPct}%`;
+
+            // --- Eficiência Territorial: bubble chart (só renderiza se o canvas existir) ---
+            const effCompareContainer = document.getElementById('effCompareChart');
+            if(effCompareContainer) {
+                if(charts.effCompare) {
+                    charts.effCompare.destroy();
+                }
+                charts.effCompare = new Chart(effCompareContainer, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: Object.values(execData).map(it => {
+                            const eff = it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+                            return {
+                                x: it.idh * 100,
+                                y: eff,
+                                r: Math.sqrt(it.pop) * 0.4,
+                                name: it.name,
+                                isCurrent: it.name === c.name
+                            };
+                        }),
+                        backgroundColor: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(139, 92, 246, 0.6)';
+                        },
+                        borderColor: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? pal.r : pal.p;
+                        },
+                        borderWidth: 2,
+                        pointRadius: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? ctx.raw.r * 1.2 : ctx.raw.r;
+                        }
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.name}: ${ctx.parsed.y.toFixed(1)} estud/100k hab | IDH ${(ctx.parsed.x/100).toFixed(3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'IDH Municipal (%) →', font: { size: 11 } },
+                            min: 55,
+                            max: 80
+                        },
+                        y: { 
+                            title: { display: true, text: 'Eficiência (estudantes/100k hab) ↑', font: { size: 11 } },
+                            beginAtZero: true
+                        }
+                    }
+                }
+                });
+            }
+
+            // Calcula Eficiência Territorial (estudantes/100k hab) para mini-KPIs
+            const effCampusCalc = c.pop > 0 ? ((c.stud / c.pop) * 100) : 0;
+            const effRegiaoArrCalc = regionCodes.map(k => {
+                const it = execData[k];
+                return it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+            });
+            const effRegiaoCalc = effRegiaoArrCalc.length ? (effRegiaoArrCalc.reduce((a,b) => a+b) / effRegiaoArrCalc.length) : 0;
+            const effRedeArrCalc = Object.values(execData).map(it => {
+                return it.pop > 0 ? ((it.stud / it.pop) * 100) : 0;
+            });
+            const effRedeCalc = effRedeArrCalc.length ? (effRedeArrCalc.reduce((a,b) => a+b) / effRedeArrCalc.length) : 0;
+            
+            // Total de estudantes e projetos por nível
+            const projCampus = c.proj || 0;
+            const projRegiao = regionCodes.reduce((sum, k) => sum + (execData[k].proj || 0), 0);
+            const projRede = Object.values(execData).reduce((sum, it) => sum + (it.proj || 0), 0);
+            
+            // População por nível
+            const popCampus = c.pop || 0;
+            const popRegiao = regionCodes.reduce((sum, k) => sum + (execData[k].pop || 0), 0);
+            const popRede = Object.values(execData).reduce((sum, it) => sum + (it.pop || 0), 0);
+
+            // Popula mini-KPIs de Eficiência (para cards no topo)
+            const effCampusEl = document.getElementById('eff-campus-chart');
+            const effRegiaoEl = document.getElementById('eff-regiao-chart');
+            const effRedeEl = document.getElementById('eff-rede-chart');
+            
+            if(effCampusEl) effCampusEl.innerText = effCampusCalc.toFixed(1);
+            if(effRegiaoEl) effRegiaoEl.innerText = effRegiaoCalc.toFixed(1);
+            if(effRedeEl) effRedeEl.innerText = effRedeCalc.toFixed(1);
+
+            // --- Retorno econômico: investimento per capita vs PIB per capita ---
+            const invTotal = calcGlobalInv(c).total;
+            const retornoCampus = c.pibPerCap > 0 ? ((invTotal / (c.pop * 1000)) / c.pibPerCap * 100).toFixed(2) : 0;
+            
+            // Calcular linha de tendência (regressão linear)
+            const retornoData = Object.values(execData).map(it => {
+                const inv = calcGlobalInv(it);
+                const invPerCap = it.pop > 0 ? (inv.total / (it.pop * 1000)) : 0;
+                return { x: it.pibPerCap, y: invPerCap, name: it.name, isCurrent: it.name === c.name };
+            });
+            
+            const n = retornoData.length;
+            const sumX = retornoData.reduce((acc, p) => acc + p.x, 0);
+            const sumY = retornoData.reduce((acc, p) => acc + p.y, 0);
+            const sumXY = retornoData.reduce((acc, p) => acc + (p.x * p.y), 0);
+            const sumX2 = retornoData.reduce((acc, p) => acc + (p.x * p.x), 0);
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            const minX = Math.min(...retornoData.map(p => p.x));
+            const maxX = Math.max(...retornoData.map(p => p.x));
+            const trendLine = [
+                { x: minX, y: slope * minX + intercept },
+                { x: maxX, y: slope * maxX + intercept }
+            ];
+            
+            const retornoContainer = document.getElementById('retornoChart');
+            if(retornoContainer && charts.retorno) charts.retorno.destroy();
+            if(retornoContainer) {
+                charts.retorno = new Chart(retornoContainer, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: retornoData,
+                        backgroundColor: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(37, 99, 235, 0.6)';
+                        },
+                        pointRadius: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? 10 : 6;
+                        },
+                        pointHoverRadius: 8
+                    }, {
+                        label: 'Tendência',
+                        data: trendLine,
+                        type: 'line',
+                        borderColor: 'rgba(100, 116, 139, 0.5)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.name}: R$ ${ctx.parsed.y.toFixed(2)}/hab (PIB R$ ${ctx.parsed.x}k)`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'PIB per capita (R$ mil)', font: { size: 11 } },
+                            beginAtZero: false
+                        },
+                        y: { 
+                            title: { display: true, text: 'Investimento per capita (R$/hab)', font: { size: 11 } },
+                            beginAtZero: true
+                        }
+                    }
+                }
+                });
+            }
+
+            // Popula mini-KPIs de Retorno Econômico
+            const retCampusEl = document.getElementById('ret-campus-chart');
+            const retRegiaoEl = document.getElementById('ret-regiao-chart');
+            const retRedeEl = document.getElementById('ret-rede-chart');
+            
+            if(retCampusEl) retCampusEl.innerText = `R$ ${invPerCapCampus.toFixed(2)}`;
+            if(retRegiaoEl) retRegiaoEl.innerText = `R$ ${regionInvPerCap.toFixed(2)}`;
+            if(retRedeEl) retRedeEl.innerText = `R$ ${networkInvPerCap.toFixed(2)}`;
+
+            // --- Inclusão Técnica: % jovens x IDH (tamanho = bolsas técnicas) ---
+            const inclusaoContainer = document.getElementById('inclusaoChart');
+            if(inclusaoContainer && charts.inclusao) charts.inclusao.destroy();
+            if(inclusaoContainer) {
+                charts.inclusao = new Chart(inclusaoContainer, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Rede IFPE',
+                        data: Object.values(execData).map(it => ({
+                            x: it.idh * 100,
+                            y: it.popJovem,
+                            r: Math.sqrt(it.tech || 1) * 4,
+                            name: it.name,
+                            tech: it.tech,
+                            isCurrent: it.name === c.name
+                        })),
+                        backgroundColor: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? pal.r : 'rgba(245, 158, 11, 0.6)';
+                        },
+                        borderColor: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? pal.r : pal.o;
+                        },
+                        borderWidth: 2,
+                        pointRadius: (ctx) => {
+                            return ctx.raw && ctx.raw.isCurrent ? ctx.raw.r * 1.2 : ctx.raw.r;
+                        }
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.name}: ${ctx.raw.tech} bolsas téc | ${ctx.parsed.y.toFixed(1)}% jovens | IDH ${(ctx.parsed.x/100).toFixed(3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'IDH Municipal (%) →', font: { size: 11 } },
+                            min: 55,
+                            max: 80
+                        },
+                        y: { 
+                            title: { display: true, text: '% População Jovem (15-29 anos) ↑', font: { size: 11 } },
+                            min: 15,
+                            max: 26
+                        }
+                    }
+                }
+            });
+
+            // Popula mini-KPIs de Inclusão Técnica
+            const incRegiao = regionCodes.length ? (regionCodes.reduce((sum, k) => sum + (execData[k].popJovem || 0), 0) / regionCodes.length).toFixed(1) : 0;
+            const incRede = (Object.values(execData).reduce((sum, it) => sum + (it.popJovem || 0), 0) / Object.keys(execData).length).toFixed(1);
+            document.getElementById('inc-campus-chart').innerText = `${c.popJovem.toFixed(1)}%`;
+            document.getElementById('inc-regiao-chart').innerText = `${incRegiao}%`;
+            document.getElementById('inc-rede-chart').innerText = `${incRede}%`;
+            }
+
+            // --- Mapa estratégico: distancia vs IVS (tamanho = projetos) ---
+            const mapaContainer = document.getElementById('mapaEstrategicoChart');
+            if(mapaContainer && charts.mapaEstrategico) charts.mapaEstrategico.destroy();
+            if(mapaContainer) {
+                const maxDist = Math.max(...Object.values(execData).map(it => it.distKm || 0));
+                charts.mapaEstrategico = new Chart(mapaContainer, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Cidades IFPE',
+                        data: Object.values(execData).map(it => ({
+                            x: it.distKm || 0,
+                            y: (it.vuln || 0) * 100,
+                            r: Math.sqrt(it.proj) * 3,
+                            name: it.name,
+                            alf: it.taxaAlf,
+                            isCurrent: it.name === c.name
+                        })),
+                        backgroundColor: (ctx) => {
+                            if (!ctx.raw) return pal.b;
+                            if (ctx.raw.isCurrent) return pal.r;
+                            if ((ctx.raw.alf || 0) >= 90) return 'rgba(16, 185, 129, 0.55)';
+                            if ((ctx.raw.alf || 0) >= 85) return 'rgba(245, 158, 11, 0.55)';
+                            return 'rgba(239, 68, 68, 0.55)';
+                        },
+                        borderColor: (ctx) => {
+                            if (!ctx.raw) return pal.b;
+                            return ctx.raw.isCurrent ? pal.r : pal.g;
+                        },
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.name}: ${Math.round(ctx.parsed.x)} km | IVS ${(ctx.parsed.y/100).toFixed(2)} | Alf ${ctx.raw.alf.toFixed(1)}% | ${Math.round((ctx.raw.r/3)**2)} proj`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Distância ao Recife (km) →', font: { size: 12, weight: 'bold' } },
+                            min: 0,
+                            max: maxDist + 20
+                        },
+                        y: { 
+                            title: { display: true, text: 'IVS (Vulnerabilidade Social) ↑', font: { size: 12, weight: 'bold' } },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Popula mini-KPIs de Mapa Estratégico
+            const mapRegiao = regionCodes.length ? (regionCodes.reduce((sum, k) => sum + (execData[k].distKm || 0), 0) / regionCodes.length).toFixed(0) : 0;
+            const mapRede = (Object.values(execData).reduce((sum, it) => sum + (it.distKm || 0), 0) / Object.keys(execData).length).toFixed(0);
+            const mapCampusEl = document.getElementById('map-campus-chart');
+            const mapRegiaoEl = document.getElementById('map-regiao-chart');
+            const mapRedeEl = document.getElementById('map-rede-chart');
+            
+            if(mapCampusEl) mapCampusEl.innerText = `${c.distKm} km`;
+            if(mapRegiaoEl) mapRegiaoEl.innerText = `${mapRegiao} km`;
+            if(mapRedeEl) mapRedeEl.innerText = `${mapRede} km`;
+            }
+
+            const campusMetrics = calcRadarMetrics(c, maxProj, maxInvPerCap);
+            const regionLabel = region === 'Global' ? 'Rede' : `Região ${region}`;
+            const radarDatasets = [
+                { data: [campusMetrics.volume, campusMetrics.idh, campusMetrics.vuln, campusMetrics.tecShare, campusMetrics.invest], label: 'Campus', fill: true, backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: pal.b }
+            ];
+            if (region !== 'Global') {
+                radarDatasets.push({ data: [regionMetrics.volume, regionMetrics.idh, regionMetrics.vuln, regionMetrics.tecShare, regionMetrics.invest], label: regionLabel, fill: true, backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: pal.o });
+            }
+            radarDatasets.push({ data: [networkMetrics.volume, networkMetrics.idh, networkMetrics.vuln, networkMetrics.tecShare, networkMetrics.invest], label: 'Média Rede', fill: true, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: pal.g });
+
+            const radarElement = document.getElementById('radarChart');
+            if(radarElement) {
+                if(charts.radar) charts.radar.destroy();
+                charts.radar = new Chart(radarElement, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Volume', 'IDH', 'Vulnerabilidade', '% Técnico', 'Invest./hab'],
+                        datasets: radarDatasets
+                    },
+                    options: { plugins: { legend: { display: true, position: 'bottom' } }, scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { display: false } } } }
+                });
+            }
+
+            const profileScale = getProfileScale();
+            const profileComponents = calcProfileComponents(currentCampusCode, profileScale);
+            const profileScore = profileComponents
+                ? profileComponents.scores.reduce((sum, val) => sum + val, 0) / profileComponents.scores.length
+                : 0;
+            
+            // Atualiza valores dos cards do topo (DEPOIS de todos os cálculos)
+            console.log('Atualizando cards com:', { ivs: c.vuln, proj: c.proj, totalMoney, invPerCapCampus });
+            
+            const pibCard = document.getElementById('card-rx-pib');
+            const perfilCard = document.getElementById('card-rx-perfil');
+            const invCard = document.getElementById('card-rx-inv');
+            const effCard = document.getElementById('card-rx-eff');
+            const retCard = document.getElementById('card-rx-ret');
+            const incCard = document.getElementById('card-rx-inc');
+            const mapCard = document.getElementById('card-rx-map');
+            
+            console.log('Elementos encontrados:', { 
+                pibCard: !!pibCard, 
+                perfilCard: !!perfilCard,
+                invCard: !!invCard,
+                effCard: !!effCard,
+                retCard: !!retCard,
+                incCard: !!incCard,
+                mapCard: !!mapCard
+            });
+            
+            if(pibCard) {
+                pibCard.innerText = `R$ ${c.pibPerCap.toFixed(1)}k`;
+                console.log('PIB atualizado para:', pibCard.innerText);
+            } else {
+                console.error('Elemento card-rx-pib não encontrado!');
+            }
+            
+            if(perfilCard) perfilCard.innerText = `${profileScore.toFixed(0)} pts`;
+            if(invCard) invCard.innerText = totalMoney.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+            if(effCard) effCard.innerText = c.pop > 0 ? ((c.proj / (c.pop * 1000)) * 100000).toFixed(1) : '0';
+            if(retCard) retCard.innerText = `R$ ${invPerCapCampus.toFixed(2)}`;
+            if(incCard) incCard.innerText = `${c.popJovem.toFixed(1)}%`;
+            const meeting = computeMeetingPoint(Object.keys(execData));
+            if(mapCard) mapCard.innerText = meeting.best ? `${meeting.best.name}` : '-';
+            
+            console.log('====== CARDS ATUALIZADOS COM SUCESSO ======');
+            console.log('Cards atualizados com valores:', { 
+                pib: pibCard?.innerText, 
+                perfil: perfilCard?.innerText,
+                inv: invCard?.innerText
+            });            
+            // Renderiza o gráfico selecionado na área dinâmica
+            const selectedCard = document.querySelector(`#view-campus .interactive-card.selected`) || 
+                                 document.querySelector(`#view-campus .interactive-card:first-child`);
+            renderCampusChart(currentCampusChartType, selectedCard);
+        }
+
+        window.onload = () => { 
+            updateSubView('Global');
+            // Inicializa a aba Raio-X com Recife como padrão
+            currentCampusCode = 'REC';
+        };
+    </script>
+</body>
+</html>
