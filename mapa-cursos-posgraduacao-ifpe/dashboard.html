@@ -717,14 +717,14 @@
                 "Zona da Mata": "#377eb8",
                 "Agreste": "#4daf4a",
                 "Sertão": "#984ea3",
-                "Vários": "#ff7f00"
+                "Várias": "#ff7f00"
             };
 
             allCoursesCount = campiData.reduce((total, campus) => total + campus.courses.length, 0);
             updateIndicators(campiData);
 
             campiData.forEach(campus => {
-		if (campus.region === "Vários") return;
+		if (campus.region === "Várias") return;
                 const markerIcon = L.divIcon({
                     className: 'custom-marker',
                     html: `<div style="background-color: ${regionColors[campus.region]}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
@@ -760,7 +760,7 @@
                 div.innerHTML = '<h4>Regiões</h4>';
                 
                 for (const region in regionColors) {
-                    if (region !== "Vários") {
+                    if (region !== "Várias") {
                         div.innerHTML += `<div><i style="background:${regionColors[region]}"></i> ${region}</div>`;
                     }
                 }
